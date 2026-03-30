@@ -2,7 +2,7 @@ name: Scrapper Vinted - PheeA Fashion
 
 on:
   schedule:
-    - cron: '0 * * * *'
+    - cron: '0 6,12,18,0 * * *'   # 4x par jour : 6h, 12h, 18h, minuit
   workflow_dispatch:
 
 jobs:
@@ -22,7 +22,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install vinted-api-wrapper
+        run: pip install requests
 
       - name: Run scrapper
         env:
