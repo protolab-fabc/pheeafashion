@@ -1,41 +1,26 @@
 #!/usr/bin/env python3
 """
 SCRAPPER VINTED - PheeA Fashion
-Auto-authentification : recupere un token anonyme a chaque execution.
-Aucun cookie a maintenir. Tourne sur GitHub Actions toutes les heures.
+Utilise vinted-api-wrapper qui gere l'auth automatiquement.
 
-Dependances : pip install curl_cffi
+Dependances : pip install vinted-api-wrapper
 """
 
-import json, time, re, os, sys
+import json, time, os, sys
 from datetime import datetime
 
 try:
-    from curl_cffi import requests
+    from vinted import Vinted
 except ImportError:
-    print("[ERREUR] Installe curl_cffi : pip install curl_cffi")
+    print("[ERREUR] Installe vinted-api-wrapper : pip install vinted-api-wrapper")
     sys.exit(1)
 
 VINTED_USER_ID  = "3138419705"
 VINTED_USERNAME = "pheeafashion"
 VINTED_DOMAIN   = "https://www.vinted.be"
 OUTPUT_FILE     = "data.json"
-MAX_PAGES       = 10
-DELAY           = 1.5
-
-BASE_HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/124.0.0.0 Safari/537.36"
-    ),
-    "Accept-Language": "fr-BE,fr;q=0.9,en;q=0.8",
-    "Accept-Encoding": "identity",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-}
-
-SESSION = requests.Session(impersonate="chrome124")
-SESSION.headers.update(BASE_HEADERS)
+MAX_ITEMS       = 200
+DELAY           = 1.0
 
 CAT_MAP = {
     "women": "Femme", "femme": "Femme",
@@ -54,107 +39,31 @@ def detect_category(url, title):
     if any(w in t for w in ["sac","ceinture","chapeau","bijou","montre","lunettes","collier"]): return "Accessoires"
     return "Femme"
 
-def get_anon_token():
-    print("  Recuperation du token anonyme...")
-    profile_url = f"{VINTED_DOMAIN}/member/{VINTED_USER_ID}-{VINTED_USERNAME}"
-
-    try:
-        r = SESSION.get(profile_url, timeout=20)
-        print(f"  Page profil: {r.status_code}")
-
-        if r.status_code != 200:
-            return False, f"Page profil inaccessible ({r.status_code})"
-
-        cookies = dict(SESSION.cookies)
-        print(f"  Cookies recus: {list(cookies.keys())}")
-
-        if "_vinted_be_session" not in cookies:
-            print("  [WARN] Cookie _vinted_be_session absent - l'IP est peut-etre bloquee")
-
-        csrf = ""
-        patterns = [
-            r'csrf-token" content="([^"]+)"',
-            r'"CSRF_TOKEN":"([^"]+)"',
-            r'data-csrf="([^"]+)"',
-            r'"csrfToken":"([^"]+)"',
-        ]
-        for pattern in patterns:
-            m = re.search(pattern, r.text)
-            if m:
-                csrf = m.group(1)
-                print(f"  CSRF token trouve: {csrf[:20]}...")
-                break
-
-        if csrf:
-            SESSION.headers["X-CSRF-Token"] = csrf
-
-        SESSION.headers["Accept"] = "application/json, text/plain, */*"
-        SESSION.headers["Referer"] = profile_url
-        SESSION.headers["X-Requested-With"] = "XMLHttpRequest"
-
-        return True, "ok"
-
-    except Exception as e:
-        return False, str(e)
-
-def scrape_page(page):
-    url = (
-        f"{VINTED_DOMAIN}/api/v2/users/{VINTED_USER_ID}/wardrobe"
-        f"?page={page}&per_page=20&order=newest_first"
-    )
-    try:
-        r = SESSION.get(url, timeout=20)
-        print(f"  Page {page} -> {r.status_code}")
-
-        if r.status_code in (401, 403):
-            print(f"  [WARN] Token expire ({r.status_code}), tentative refresh...")
-            ok, msg = get_anon_token()
-            if ok:
-                r = SESSION.get(url, timeout=20)
-                print(f"  Page {page} apres refresh -> {r.status_code}")
-
-        if r.status_code == 200:
-            data = r.json()
-            items = data.get("items", [])
-            if items and isinstance(items, list):
-                return items
-            for key, val in data.items():
-                if isinstance(val, list) and val and isinstance(val[0], dict) and "title" in val[0]:
-                    return val
-
-    except Exception as e:
-        print(f"  Erreur: {e}")
-    return []
-
 def format_item(raw):
-    url = raw.get("url", raw.get("path", ""))
-    if not url.startswith("http"):
-        url = f"{VINTED_DOMAIN}{url}"
-    title = raw.get("title", "Article")
+    # raw est un objet Item du wrapper
+    url = getattr(raw, "url", "") or ""
+    title = getattr(raw, "title", "Article") or "Article"
     try:
-        price_raw = raw.get("price", 0)
-        price = float(price_raw.get("amount", 0)) if isinstance(price_raw, dict) else float(str(price_raw))
+        price = float(getattr(raw, "price", 0) or 0)
     except:
-        price = 0
-    photos = raw.get("photos", [])
+        price = 0.0
+
+    # Photo
     img = ""
-    if photos and isinstance(photos, list):
-        p = photos[0]
-        img = p.get("url", "") or p.get("full_size_url", "")
-    if not img:
-        p = raw.get("photo", {})
-        if isinstance(p, dict):
-            img = p.get("url", "") or p.get("full_size_url", "")
+    photo = getattr(raw, "photo", None)
+    if photo:
+        img = getattr(photo, "url", "") or getattr(photo, "full_size_url", "") or ""
+
     return {
-        "id":       str(raw.get("id", int(time.time()))),
+        "id":       str(getattr(raw, "id", int(time.time()))),
         "titre":    title,
         "prix":     round(price, 2),
         "cat":      detect_category(url, title),
         "platform": "Vinted",
         "lien":     url,
         "image":    img,
-        "taille":   raw.get("size_title", ""),
-        "marque":   raw.get("brand_title", ""),
+        "taille":   getattr(raw, "size_title", "") or "",
+        "marque":   getattr(raw, "brand_title", "") or "",
     }
 
 def send_github_alert(reason):
@@ -163,11 +72,6 @@ def send_github_alert(reason):
     github_repo  = os.environ.get("GITHUB_REPOSITORY", "")
     if not github_token or not github_repo:
         return
-    headers = {
-        "Authorization": f"token {github_token}",
-        "Accept": "application/vnd.github.v3+json",
-        "Content-Type": "application/json",
-    }
     body = (
         "## Scrapper en echec\n\n"
         f"**Raison :** {reason}\n"
@@ -184,7 +88,11 @@ def send_github_alert(reason):
         req = _urllib.Request(
             f"https://api.github.com/repos/{github_repo}/issues",
             data=payload,
-            headers=headers,
+            headers={
+                "Authorization": f"token {github_token}",
+                "Accept": "application/vnd.github.v3+json",
+                "Content-Type": "application/json",
+            },
             method="POST"
         )
         _urllib.urlopen(req, timeout=10)
@@ -198,31 +106,57 @@ def run():
     print(f"  {datetime.now().strftime('%d/%m/%Y %H:%M')}")
     print("=" * 52)
 
-    ok, msg = get_anon_token()
-    if not ok:
+    # Initialisation du client Vinted BE
+    print("  Initialisation client Vinted BE...")
+    try:
+        vinted = Vinted(domain="be")
+    except Exception as e:
+        msg = f"Impossible d'initialiser Vinted: {e}"
         print(f"[ERREUR] {msg}")
         send_github_alert(msg)
         sys.exit(1)
 
+    # Recuperation des articles du vendeur via search user_id
+    print(f"  Recherche articles vendeur {VINTED_USER_ID}...")
     articles, seen = [], set()
-    for page in range(1, MAX_PAGES + 1):
-        items = scrape_page(page)
-        if not items:
-            print(f"  Fin a la page {page}")
-            break
-        for raw in items:
-            art = format_item(raw)
-            if art["id"] not in seen:
-                seen.add(art["id"])
-                articles.append(art)
-        print(f"  Cumul: {len(articles)} articles")
-        if page < MAX_PAGES:
+
+    try:
+        # Le wrapper supporte user_id dans search
+        page = 1
+        while len(articles) < MAX_ITEMS:
+            result = vinted.search(
+                user_id=int(VINTED_USER_ID),
+                order="newest_first",
+                page=page,
+                per_page=20
+            )
+            items = getattr(result, "items", [])
+            if not items:
+                print(f"  Fin a la page {page} (0 item)")
+                break
+            for raw in items:
+                art = format_item(raw)
+                if art["id"] not in seen:
+                    seen.add(art["id"])
+                    articles.append(art)
+            print(f"  Page {page} -> {len(items)} items | Cumul: {len(articles)}")
+            page += 1
             time.sleep(DELAY)
+
+    except Exception as e:
+        if len(articles) == 0:
+            msg = f"Erreur scraping: {e}"
+            print(f"[ERREUR] {msg}")
+            send_github_alert(msg)
+            sys.exit(1)
+        else:
+            print(f"  [WARN] Arret apres erreur: {e}")
 
     if len(articles) == 0:
         send_github_alert("0 article recupere - Vinted bloque peut-etre les IPs GitHub Actions")
         sys.exit(1)
 
+    # Sauvegarde
     output = {
         "meta": {
             "source":     "Vinted",
