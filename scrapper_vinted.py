@@ -82,27 +82,69 @@ def detect_category(url, title):
             return "Femme"
     return "Femme"
 
+def to_float(val):
+    """Convertit n'importe quelle valeur en float, retourne None si impossible."""
+    if val is None:
+        return None
+    if isinstance(val, (int, float)):
+        f = float(val)
+        return f if f > 0 else None
+    if isinstance(val, str):
+        cleaned = val.replace(",", ".").replace(" ", "").replace("\u202f", "")
+        try:
+            f = float(cleaned)
+            return f if f > 0 else None
+        except Exception:
+            return None
+    return None
+
 def extract_price(raw):
-    v = raw.get("price_numeric")
-    if v is not None:
-        try:
-            return round(float(v), 2)
-        except Exception:
-            pass
-    v = raw.get("price")
-    if v is not None:
-        try:
-            return round(float(str(v).replace(",", ".")), 2)
-        except Exception:
-            pass
-    tip = raw.get("total_item_price") or {}
+    """
+    L'API Vinted peut renvoyer le prix sous de nombreux formats.
+    On teste tous les champs connus dans l'ordre de fiabilite.
+    """
+    candidates = []
+
+    # 1. price_numeric (float direct)
+    candidates.append(raw.get("price_numeric"))
+
+    # 2. price (peut etre un dict {"amount": "12.50"} OU un string/float direct)
+    p = raw.get("price")
+    if isinstance(p, dict):
+        candidates.append(p.get("amount"))
+        candidates.append(p.get("currency_amount"))
+    else:
+        candidates.append(p)
+
+    # 3. total_item_price (dict {"amount": "12.50"})
+    tip = raw.get("total_item_price")
     if isinstance(tip, dict):
-        v = tip.get("amount")
-        if v is not None:
-            try:
-                return round(float(str(v).replace(",", ".")), 2)
-            except Exception:
-                pass
+        candidates.append(tip.get("amount"))
+        candidates.append(tip.get("currency_amount"))
+    else:
+        candidates.append(tip)
+
+    # 4. item_price (autre variante)
+    ip = raw.get("item_price")
+    if isinstance(ip, dict):
+        candidates.append(ip.get("amount"))
+    else:
+        candidates.append(ip)
+
+    # 5. service_fee (parfois le seul champ present, on l'ignore)
+    # Cherche dans tous les sous-dicts restants
+    for key in ("original_price", "discount_price", "suggested_price"):
+        v = raw.get(key)
+        if isinstance(v, dict):
+            candidates.append(v.get("amount"))
+        else:
+            candidates.append(v)
+
+    for c in candidates:
+        result = to_float(c)
+        if result is not None:
+            return round(result, 2)
+
     return 0.0
 
 def format_item(raw):
@@ -114,6 +156,11 @@ def format_item(raw):
     photo = raw.get("photo") or (raw.get("photos") or [None])[0]
     if isinstance(photo, dict):
         img = photo.get("url") or photo.get("full_size_url") or ""
+
+    if price == 0.0:
+        # Log pour debug - affiche tous les champs avec "price" dans le nom
+        price_fields = {k: v for k, v in raw.items() if "price" in k.lower() or "fee" in k.lower()}
+        print(f"    [DEBUG PRIX] '{title[:35]}' | champs prix: {price_fields}")
 
     return {
         "id":       str(raw.get("id", int(time.time()))),
@@ -231,8 +278,6 @@ def run():
                 if art["id"] not in seen:
                     seen.add(art["id"])
                     articles.append(art)
-                    if art["prix"] == 0.0:
-                        print(f"    [DEBUG] Prix=0 -> {art['titre'][:40]} | keys: {list(raw.keys())[:8]}")
 
             print(f"  Page {page} -> {len(items)} items | Cumul: {len(articles)}")
             page += 1
@@ -267,7 +312,9 @@ def run():
         json.dump(output, f, ensure_ascii=False, indent=2)
 
     prix_ok = sum(1 for a in articles if a["prix"] > 0)
-    print(f"\n  {len(articles)} articles sauvegardes ({prix_ok} avec prix > 0)")
+    prix_zero = len(articles) - prix_ok
+    print(f"\n  {len(articles)} articles sauvegardes")
+    print(f"  Avec prix: {prix_ok} | Sans prix: {prix_zero}")
     print(f"  Mis a jour: {output['meta']['mis_a_jour']}")
 
 if __name__ == "__main__":
