@@ -11,6 +11,7 @@ from datetime import datetime
 VINTED_USER_ID  = "3138419705"
 VINTED_USERNAME = "pheeafashion"
 BASE_URL        = "https://www.vinted.be"
+PROFIL_URL      = f"{BASE_URL}/member/{VINTED_USER_ID}-{VINTED_USERNAME}?tab=closet"
 OUTPUT_FILE     = "data.json"
 MAX_ITEMS       = 200
 DELAY           = 1.5
@@ -24,57 +25,49 @@ HEADERS = {
     "DNT":             "1",
 }
 
-# Mots-cles dans l'URL ou le titre -> categorie
-# Valeurs finales autorisees : "Femme", "Homme", "Enfant", "Accessoires"
 CAT_URL = {
-    # Femme
     "women": "Femme", "femme": "Femme", "ladies": "Femme",
     "woman": "Femme", "dame": "Femme", "dames": "Femme",
-    # Homme
     "men":   "Homme", "homme": "Homme", "man": "Homme",
     "heren": "Homme", "herren": "Homme",
-    # Enfant
     "kids":  "Enfant", "enfant": "Enfant", "children": "Enfant",
     "baby":  "Enfant", "bebe": "Enfant", "junior": "Enfant",
     "garcon": "Enfant", "fille": "Enfant", "girl": "Enfant", "boy": "Enfant",
-    # Accessoires
     "accessories": "Accessoires", "accessoires": "Accessoires",
     "accessory": "Accessoires", "bags": "Accessoires", "jewelry": "Accessoires",
     "bijoux": "Accessoires", "shoes": "Accessoires", "chaussures": "Accessoires",
 }
 
-CAT_TITLE_FEMME = [
-    "robe", "jupe", "blouse", "tunique", "legging", "soutien", "brassiere",
-    "bustier", "crop top", "cardigan femme", "pull femme", "manteau femme",
-    "veste femme", "chemisier", "combinaison", "salopette femme", "body",
-    "lingerie", "nuisette", "pyjama femme", "maillot bain", "bikini",
-]
-CAT_TITLE_HOMME = [
-    "costume", "blazer homme", "polo homme", "cravate", "chemise homme",
-    "pull homme", "sweat homme", "veste homme", "manteau homme", "jean homme",
-    "pantalon homme", "short homme", "bermuda", "jogging homme",
+CAT_TITLE_ACCESSOIRES = [
+    "sac", "pochette", "ceinture", "chapeau", "bonnet", "echarpe", "foulard",
+    "bijou", "collier", "bague", "bracelet", "montre", "lunettes", "lunette",
+    "chaussure", "basket", "botte", "sandale", "escarpin", "talon", "mocassin",
+    "portefeuille", "sac a main", "tote bag", "backpack", "sac dos",
+    "gants", "mitaines", "casquette",
 ]
 CAT_TITLE_ENFANT = [
     "enfant", "bebe", "baby", "garcon", "fille", " ans", "naissance",
     "maternelle", "junior", "kid", "kids", "creche", "pyjama enfant",
     "body bebe", "combinaison bebe", "gigoteuse",
 ]
-CAT_TITLE_ACCESSOIRES = [
-    "sac", "pochette", "ceinture", "chapeau", "bonnet", "echarpe", "foulard",
-    "bijou", "collier", "bague", "bracelet", "montre", "lunettes", "lunette",
-    "chaussure", "basket", "botte", "sandale", "escarpin", "talon", "mocassin",
-    "portefeuille", "sac a main", "tote bag", "backpack", "sac dos",
-    "ceinture", "gants", "mitaines", "casquette",
+CAT_TITLE_HOMME = [
+    "costume", "blazer homme", "polo homme", "cravate", "chemise homme",
+    "pull homme", "sweat homme", "veste homme", "manteau homme", "jean homme",
+    "pantalon homme", "short homme", "bermuda", "jogging homme",
+]
+CAT_TITLE_FEMME = [
+    "robe", "jupe", "blouse", "tunique", "legging", "soutien", "brassiere",
+    "bustier", "crop top", "cardigan femme", "pull femme", "manteau femme",
+    "veste femme", "chemisier", "combinaison", "salopette femme", "body",
+    "lingerie", "nuisette", "pyjama femme", "maillot bain", "bikini",
 ]
 
 def detect_category(url, title):
     url_l   = url.lower()
     title_l = title.lower()
-    # Priorite 1 : URL
     for key, val in CAT_URL.items():
         if key in url_l:
             return val
-    # Priorite 2 : titre
     for w in CAT_TITLE_ACCESSOIRES:
         if w in title_l:
             return "Accessoires"
@@ -87,32 +80,21 @@ def detect_category(url, title):
     for w in CAT_TITLE_FEMME:
         if w in title_l:
             return "Femme"
-    return "Femme"  # defaut
+    return "Femme"
 
 def extract_price(raw):
-    """
-    L'API Vinted peut renvoyer le prix sous plusieurs formes :
-      - raw["price"] = "12.50"  (string)
-      - raw["price_numeric"] = 12.5  (float)
-      - raw["total_item_price"] = {"amount": "12.50", "currency_code": "EUR"}
-    """
-    # 1. price_numeric (le plus fiable)
     v = raw.get("price_numeric")
     if v is not None:
         try:
             return round(float(v), 2)
         except Exception:
             pass
-
-    # 2. price (string ou nombre)
     v = raw.get("price")
     if v is not None:
         try:
             return round(float(str(v).replace(",", ".")), 2)
         except Exception:
             pass
-
-    # 3. total_item_price.amount
     tip = raw.get("total_item_price") or {}
     if isinstance(tip, dict):
         v = tip.get("amount")
@@ -121,7 +103,6 @@ def extract_price(raw):
                 return round(float(str(v).replace(",", ".")), 2)
             except Exception:
                 pass
-
     return 0.0
 
 def format_item(raw):
@@ -251,7 +232,7 @@ def run():
                     seen.add(art["id"])
                     articles.append(art)
                     if art["prix"] == 0.0:
-                        print(f"    [DEBUG] Prix=0 pour: {art['titre'][:40]} | raw keys: {list(raw.keys())[:8]}")
+                        print(f"    [DEBUG] Prix=0 -> {art['titre'][:40]} | keys: {list(raw.keys())[:8]}")
 
             print(f"  Page {page} -> {len(items)} items | Cumul: {len(articles)}")
             page += 1
@@ -273,7 +254,7 @@ def run():
     output = {
         "meta": {
             "source":     "Vinted",
-            "profil":     f"{BASE_URL}/member/{VINTED_USER_ID}-{VINTED_USERNAME}",
+            "profil":     PROFIL_URL,
             "total":      len(articles),
             "mis_a_jour": datetime.now().strftime("%d/%m/%Y %H:%M"),
             "statut":     "ok",
