@@ -18,7 +18,7 @@ VINTED_USERNAME = "pheeafashion"
 VINTED_DOMAIN   = "https://www.vinted.be"
 OUTPUT_FILE     = "data.json"
 MAX_ITEMS       = 200
-DELAY           = 1.0
+DELAY           = 1.5
 
 CAT_MAP = {
     "women": "Femme", "femme": "Femme",
@@ -90,9 +90,9 @@ def send_github_alert(reason):
             f"https://api.github.com/repos/{github_repo}/issues",
             data=payload,
             headers={
-                "Authorization":  f"token {github_token}",
-                "Accept":         "application/vnd.github.v3+json",
-                "Content-Type":   "application/json",
+                "Authorization": f"token {github_token}",
+                "Accept":        "application/vnd.github.v3+json",
+                "Content-Type":  "application/json",
             },
             method="POST",
         )
@@ -123,12 +123,13 @@ def run():
         page = 1
         while len(articles) < MAX_ITEMS:
             search_url = (
-                f"https://www.vinted.be/api/v2/catalog/items"
+                "https://www.vinted.be/api/v2/catalog/items"
                 f"?user_id={VINTED_USER_ID}"
                 f"&order=newest_first"
                 f"&page={page}"
                 f"&per_page=20"
             )
+            # Correction : on passe l'URL complete au lieu de user_id=
             result = vinted.search(url=search_url)
             items  = getattr(result, "items", [])
 
