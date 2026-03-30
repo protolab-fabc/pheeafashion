@@ -10,7 +10,7 @@ from datetime import datetime
 
 VINTED_USER_ID  = "3138419705"
 VINTED_USERNAME = "pheeafashion"
-VINTED_DOMAIN   = "https://www.vinted.be/member/3138419705-pheeafashion"
+VINTED_DOMAIN   = "https://www.vinted.be"
 OUTPUT_FILE     = "data.json"
 MAX_PAGES       = 10
 DELAY           = 1.5
