@@ -18,7 +18,7 @@ VINTED_USERNAME = "pheeafashion"
 VINTED_DOMAIN   = "https://www.vinted.be"
 OUTPUT_FILE     = "data.json"
 MAX_ITEMS       = 200
-DELAY           = 1.5
+DELAY           = 1.0
 
 CAT_MAP = {
     "women": "Femme", "femme": "Femme",
@@ -53,7 +53,11 @@ def format_item(raw):
     img   = ""
     photo = getattr(raw, "photo", None)
     if photo:
-        img = getattr(photo, "url", "") or getattr(photo, "full_size_url", "") or ""
+        img = (
+            getattr(photo, "url", "")
+            or getattr(photo, "full_size_url", "")
+            or ""
+        )
 
     return {
         "id":       str(getattr(raw, "id", int(time.time()))),
@@ -129,7 +133,6 @@ def run():
                 f"&page={page}"
                 f"&per_page=20"
             )
-            # Correction : on passe l'URL complete au lieu de user_id=
             result = vinted.search(url=search_url)
             items  = getattr(result, "items", [])
 
@@ -157,7 +160,9 @@ def run():
             print(f"  [WARN] Arret apres erreur: {e}")
 
     if len(articles) == 0:
-        send_github_alert("0 article recupere - Vinted bloque peut-etre les IPs GitHub Actions")
+        send_github_alert(
+            "0 article recupere - Vinted bloque peut-etre les IPs GitHub Actions"
+        )
         sys.exit(1)
 
     output = {
