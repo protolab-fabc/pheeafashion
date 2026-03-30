@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """
 SCRAPPER VINTED - PheeA Fashion
-Utilise vinted-api-wrapper qui gere l'auth automatiquement.
-
 Dependances : pip install vinted-api-wrapper
 """
 
@@ -24,32 +22,35 @@ DELAY           = 1.0
 
 CAT_MAP = {
     "women": "Femme", "femme": "Femme",
-    "men": "Homme",   "homme": "Homme",
-    "kids": "Enfant", "enfant": "Enfant",
+    "men":   "Homme", "homme": "Homme",
+    "kids":  "Enfant","enfant": "Enfant",
     "accessories": "Accessoires",
 }
 
 def detect_category(url, title):
     for key, val in CAT_MAP.items():
-        if key in url.lower(): return val
+        if key in url.lower():
+            return val
     t = title.lower()
-    if any(w in t for w in ["robe","jupe","femme","soutien","blouse","tunique","legging"]): return "Femme"
-    if any(w in t for w in ["costume","blazer","polo","cravate","chemise homme"]): return "Homme"
-    if any(w in t for w in ["enfant","bebe","baby","garcon","fille"," ans"]): return "Enfant"
-    if any(w in t for w in ["sac","ceinture","chapeau","bijou","montre","lunettes","collier"]): return "Accessoires"
+    if any(w in t for w in ["robe","jupe","femme","soutien","blouse","tunique","legging"]):
+        return "Femme"
+    if any(w in t for w in ["costume","blazer","polo","cravate","chemise homme"]):
+        return "Homme"
+    if any(w in t for w in ["enfant","bebe","baby","garcon","fille"," ans"]):
+        return "Enfant"
+    if any(w in t for w in ["sac","ceinture","chapeau","bijou","montre","lunettes","collier"]):
+        return "Accessoires"
     return "Femme"
 
 def format_item(raw):
-    # raw est un objet Item du wrapper
-    url = getattr(raw, "url", "") or ""
+    url   = getattr(raw, "url",   "") or ""
     title = getattr(raw, "title", "Article") or "Article"
     try:
         price = float(getattr(raw, "price", 0) or 0)
-    except:
+    except Exception:
         price = 0.0
 
-    # Photo
-    img = ""
+    img   = ""
     photo = getattr(raw, "photo", None)
     if photo:
         img = getattr(photo, "url", "") or getattr(photo, "full_size_url", "") or ""
@@ -62,12 +63,12 @@ def format_item(raw):
         "platform": "Vinted",
         "lien":     url,
         "image":    img,
-        "taille":   getattr(raw, "size_title", "") or "",
+        "taille":   getattr(raw, "size_title",  "") or "",
         "marque":   getattr(raw, "brand_title", "") or "",
     }
 
 def send_github_alert(reason):
-    import urllib.request as _urllib
+    import urllib.request as _req
     github_token = os.environ.get("GITHUB_TOKEN", "")
     github_repo  = os.environ.get("GITHUB_REPOSITORY", "")
     if not github_token or not github_repo:
@@ -81,21 +82,21 @@ def send_github_alert(reason):
     )
     try:
         payload = json.dumps({
-            "title": f"Scrapper en echec — {datetime.now().strftime('%d/%m/%Y')}",
-            "body": body,
-            "labels": ["scrapper-error"]
+            "title":  f"Scrapper en echec - {datetime.now().strftime('%d/%m/%Y')}",
+            "body":   body,
+            "labels": ["scrapper-error"],
         }).encode()
-        req = _urllib.Request(
+        req = _req.Request(
             f"https://api.github.com/repos/{github_repo}/issues",
             data=payload,
             headers={
-                "Authorization": f"token {github_token}",
-                "Accept": "application/vnd.github.v3+json",
-                "Content-Type": "application/json",
+                "Authorization":  f"token {github_token}",
+                "Accept":         "application/vnd.github.v3+json",
+                "Content-Type":   "application/json",
             },
-            method="POST"
+            method="POST",
         )
-        _urllib.urlopen(req, timeout=10)
+        _req.urlopen(req, timeout=10)
         print("  Alerte GitHub envoyee")
     except Exception as e:
         print(f"  Erreur alerte: {e}")
@@ -106,7 +107,6 @@ def run():
     print(f"  {datetime.now().strftime('%d/%m/%Y %H:%M')}")
     print("=" * 52)
 
-    # Initialisation du client Vinted BE
     print("  Initialisation client Vinted BE...")
     try:
         vinted = Vinted(domain="be")
@@ -116,29 +116,32 @@ def run():
         send_github_alert(msg)
         sys.exit(1)
 
-    # Recuperation des articles du vendeur via search user_id
     print(f"  Recherche articles vendeur {VINTED_USER_ID}...")
     articles, seen = [], set()
 
     try:
-        # Le wrapper supporte user_id dans search
         page = 1
         while len(articles) < MAX_ITEMS:
-            result = vinted.search(
-                user_id=int(VINTED_USER_ID),
-                order="newest_first",
-                page=page,
-                per_page=20
+            search_url = (
+                f"https://www.vinted.be/api/v2/catalog/items"
+                f"?user_id={VINTED_USER_ID}"
+                f"&order=newest_first"
+                f"&page={page}"
+                f"&per_page=20"
             )
-            items = getattr(result, "items", [])
+            result = vinted.search(url=search_url)
+            items  = getattr(result, "items", [])
+
             if not items:
                 print(f"  Fin a la page {page} (0 item)")
                 break
+
             for raw in items:
                 art = format_item(raw)
                 if art["id"] not in seen:
                     seen.add(art["id"])
                     articles.append(art)
+
             print(f"  Page {page} -> {len(items)} items | Cumul: {len(articles)}")
             page += 1
             time.sleep(DELAY)
@@ -156,7 +159,6 @@ def run():
         send_github_alert("0 article recupere - Vinted bloque peut-etre les IPs GitHub Actions")
         sys.exit(1)
 
-    # Sauvegarde
     output = {
         "meta": {
             "source":     "Vinted",
@@ -167,6 +169,7 @@ def run():
         },
         "articles": articles,
     }
+
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), OUTPUT_FILE)
     with open(path, "w", encoding="utf-8") as f:
         json.dump(output, f, ensure_ascii=False, indent=2)
