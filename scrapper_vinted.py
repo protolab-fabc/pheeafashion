@@ -4,7 +4,7 @@ SCRAPPER VINTED - PheeA Fashion
 Dependances : pip install requests
 """
 
-import json, time, os, sys, re
+import json, time, os, sys
 import requests
 from datetime import datetime
 
@@ -24,45 +24,120 @@ HEADERS = {
     "DNT":             "1",
 }
 
-CAT_MAP = {
-    "women": "Femme", "femme": "Femme",
-    "men":   "Homme", "homme": "Homme",
-    "kids":  "Enfant","enfant": "Enfant",
-    "accessories": "Accessoires",
+# Mots-cles dans l'URL ou le titre -> categorie
+# Valeurs finales autorisees : "Femme", "Homme", "Enfant", "Accessoires"
+CAT_URL = {
+    # Femme
+    "women": "Femme", "femme": "Femme", "ladies": "Femme",
+    "woman": "Femme", "dame": "Femme", "dames": "Femme",
+    # Homme
+    "men":   "Homme", "homme": "Homme", "man": "Homme",
+    "heren": "Homme", "herren": "Homme",
+    # Enfant
+    "kids":  "Enfant", "enfant": "Enfant", "children": "Enfant",
+    "baby":  "Enfant", "bebe": "Enfant", "junior": "Enfant",
+    "garcon": "Enfant", "fille": "Enfant", "girl": "Enfant", "boy": "Enfant",
+    # Accessoires
+    "accessories": "Accessoires", "accessoires": "Accessoires",
+    "accessory": "Accessoires", "bags": "Accessoires", "jewelry": "Accessoires",
+    "bijoux": "Accessoires", "shoes": "Accessoires", "chaussures": "Accessoires",
 }
 
+CAT_TITLE_FEMME = [
+    "robe", "jupe", "blouse", "tunique", "legging", "soutien", "brassiere",
+    "bustier", "crop top", "cardigan femme", "pull femme", "manteau femme",
+    "veste femme", "chemisier", "combinaison", "salopette femme", "body",
+    "lingerie", "nuisette", "pyjama femme", "maillot bain", "bikini",
+]
+CAT_TITLE_HOMME = [
+    "costume", "blazer homme", "polo homme", "cravate", "chemise homme",
+    "pull homme", "sweat homme", "veste homme", "manteau homme", "jean homme",
+    "pantalon homme", "short homme", "bermuda", "jogging homme",
+]
+CAT_TITLE_ENFANT = [
+    "enfant", "bebe", "baby", "garcon", "fille", " ans", "naissance",
+    "maternelle", "junior", "kid", "kids", "creche", "pyjama enfant",
+    "body bebe", "combinaison bebe", "gigoteuse",
+]
+CAT_TITLE_ACCESSOIRES = [
+    "sac", "pochette", "ceinture", "chapeau", "bonnet", "echarpe", "foulard",
+    "bijou", "collier", "bague", "bracelet", "montre", "lunettes", "lunette",
+    "chaussure", "basket", "botte", "sandale", "escarpin", "talon", "mocassin",
+    "portefeuille", "sac a main", "tote bag", "backpack", "sac dos",
+    "ceinture", "gants", "mitaines", "casquette",
+]
+
 def detect_category(url, title):
-    for key, val in CAT_MAP.items():
-        if key in url.lower():
+    url_l   = url.lower()
+    title_l = title.lower()
+    # Priorite 1 : URL
+    for key, val in CAT_URL.items():
+        if key in url_l:
             return val
-    t = title.lower()
-    if any(w in t for w in ["robe","jupe","femme","soutien","blouse","tunique","legging"]):
-        return "Femme"
-    if any(w in t for w in ["costume","blazer","polo","cravate","chemise homme"]):
-        return "Homme"
-    if any(w in t for w in ["enfant","bebe","baby","garcon","fille"," ans"]):
-        return "Enfant"
-    if any(w in t for w in ["sac","ceinture","chapeau","bijou","montre","lunettes","collier"]):
-        return "Accessoires"
-    return "Femme"
+    # Priorite 2 : titre
+    for w in CAT_TITLE_ACCESSOIRES:
+        if w in title_l:
+            return "Accessoires"
+    for w in CAT_TITLE_ENFANT:
+        if w in title_l:
+            return "Enfant"
+    for w in CAT_TITLE_HOMME:
+        if w in title_l:
+            return "Homme"
+    for w in CAT_TITLE_FEMME:
+        if w in title_l:
+            return "Femme"
+    return "Femme"  # defaut
+
+def extract_price(raw):
+    """
+    L'API Vinted peut renvoyer le prix sous plusieurs formes :
+      - raw["price"] = "12.50"  (string)
+      - raw["price_numeric"] = 12.5  (float)
+      - raw["total_item_price"] = {"amount": "12.50", "currency_code": "EUR"}
+    """
+    # 1. price_numeric (le plus fiable)
+    v = raw.get("price_numeric")
+    if v is not None:
+        try:
+            return round(float(v), 2)
+        except Exception:
+            pass
+
+    # 2. price (string ou nombre)
+    v = raw.get("price")
+    if v is not None:
+        try:
+            return round(float(str(v).replace(",", ".")), 2)
+        except Exception:
+            pass
+
+    # 3. total_item_price.amount
+    tip = raw.get("total_item_price") or {}
+    if isinstance(tip, dict):
+        v = tip.get("amount")
+        if v is not None:
+            try:
+                return round(float(str(v).replace(",", ".")), 2)
+            except Exception:
+                pass
+
+    return 0.0
 
 def format_item(raw):
     url   = raw.get("url", "") or ""
     title = raw.get("title", "Article") or "Article"
-    try:
-        price = float(raw.get("price", 0) or 0)
-    except Exception:
-        price = 0.0
+    price = extract_price(raw)
 
-    img = ""
-    photo = raw.get("photo") or raw.get("photos", [None])[0]
+    img   = ""
+    photo = raw.get("photo") or (raw.get("photos") or [None])[0]
     if isinstance(photo, dict):
         img = photo.get("url") or photo.get("full_size_url") or ""
 
     return {
         "id":       str(raw.get("id", int(time.time()))),
         "titre":    title,
-        "prix":     round(price, 2),
+        "prix":     price,
         "cat":      detect_category(url, title),
         "platform": "Vinted",
         "lien":     url if url.startswith("http") else f"{BASE_URL}{url}",
@@ -74,7 +149,6 @@ def format_item(raw):
 def get_session():
     session = requests.Session()
     session.headers.update(HEADERS)
-    # Recuperation des cookies via la page d'accueil
     r = session.get(BASE_URL, timeout=15)
     r.raise_for_status()
     print(f"  Page accueil: {r.status_code} | Cookies: {list(session.cookies.keys())}")
@@ -137,10 +211,10 @@ def run():
         page = 1
         while len(articles) < MAX_ITEMS:
             params = {
-                "user_id":    VINTED_USER_ID,
-                "order":      "newest_first",
-                "page":       page,
-                "per_page":   20,
+                "user_id":  VINTED_USER_ID,
+                "order":    "newest_first",
+                "page":     page,
+                "per_page": 20,
             }
             r = session.get(
                 f"{BASE_URL}/api/v2/catalog/items",
@@ -176,6 +250,8 @@ def run():
                 if art["id"] not in seen:
                     seen.add(art["id"])
                     articles.append(art)
+                    if art["prix"] == 0.0:
+                        print(f"    [DEBUG] Prix=0 pour: {art['titre'][:40]} | raw keys: {list(raw.keys())[:8]}")
 
             print(f"  Page {page} -> {len(items)} items | Cumul: {len(articles)}")
             page += 1
@@ -209,7 +285,8 @@ def run():
     with open(path, "w", encoding="utf-8") as f:
         json.dump(output, f, ensure_ascii=False, indent=2)
 
-    print(f"\n  {len(articles)} articles sauvegardes dans {OUTPUT_FILE}")
+    prix_ok = sum(1 for a in articles if a["prix"] > 0)
+    print(f"\n  {len(articles)} articles sauvegardes ({prix_ok} avec prix > 0)")
     print(f"  Mis a jour: {output['meta']['mis_a_jour']}")
 
 if __name__ == "__main__":
