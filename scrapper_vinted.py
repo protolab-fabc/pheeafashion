@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
 SCRAPPER VINTED - PheeA Fashion
-Dependances : pip install vinted-api-wrapper
+Dependances : pip install vinted-api-wrapper requests
 """
 
-import json, time, os, sys
+import json, time, os, sys, requests
 from datetime import datetime
 
 try:
@@ -15,10 +15,11 @@ except ImportError:
 
 VINTED_USER_ID  = "3138419705"
 VINTED_USERNAME = "pheeafashion"
-VINTED_DOMAIN   = "https://www.vinted.be"
+VINTED_BASE_URL = "https://www.vinted.be"
 OUTPUT_FILE     = "data.json"
 MAX_ITEMS       = 200
-DELAY           = 1.0
+PER_PAGE        = 20
+DELAY           = 1.5
 
 CAT_MAP = {
     "women": "Femme", "femme": "Femme",
@@ -42,32 +43,86 @@ def detect_category(url, title):
         return "Accessoires"
     return "Femme"
 
-def format_item(raw):
-    url   = getattr(raw, "url",   "") or ""
-    title = getattr(raw, "title", "Article") or "Article"
+def format_item(raw: dict) -> dict:
+    url   = raw.get("url", "") or ""
+    title = raw.get("title", "Article") or "Article"
     try:
-        price = float(getattr(raw, "price", 0) or 0)
+        price = float(raw.get("price", 0) or 0)
     except Exception:
         price = 0.0
 
-    img   = ""
-    photo = getattr(raw, "photo", None)
-    if photo:
-        img = getattr(photo, "url", "") or getattr(photo, "full_size_url", "") or ""
+    img = ""
+    photo = raw.get("photo") or {}
+    if isinstance(photo, dict):
+        img = photo.get("url", "") or photo.get("full_size_url", "") or ""
 
     return {
-        "id":       str(getattr(raw, "id", int(time.time()))),
+        "id":       str(raw.get("id", int(time.time()))),
         "titre":    title,
         "prix":     round(price, 2),
         "cat":      detect_category(url, title),
         "platform": "Vinted",
         "lien":     url,
         "image":    img,
-        "taille":   getattr(raw, "size_title",  "") or "",
-        "marque":   getattr(raw, "brand_title", "") or "",
+        "taille":   raw.get("size_title",  "") or "",
+        "marque":   raw.get("brand_title", "") or "",
     }
 
-def send_github_alert(reason):
+def get_session_cookies() -> dict:
+    """Recupere les cookies via le wrapper Vinted."""
+    vinted = Vinted(domain="be")
+    # Le wrapper expose la session requests interne
+    session = getattr(vinted, "session", None) or getattr(vinted, "_session", None)
+    if session and hasattr(session, "cookies"):
+        return dict(session.cookies)
+    # Fallback : recuperer les cookies manuellement
+    resp = requests.get(
+        VINTED_BASE_URL,
+        headers={
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/122.0.0.0 Safari/537.36"
+            ),
+            "Accept-Language": "fr-BE,fr;q=0.9",
+        },
+        timeout=10,
+    )
+    return dict(resp.cookies)
+
+def fetch_page(session: requests.Session, page: int) -> list:
+    """Appel direct a l'API Vinted catalog/items."""
+    url = f"{VINTED_BASE_URL}/api/v2/catalog/items"
+    params = {
+        "user_id":    VINTED_USER_ID,
+        "order":      "newest_first",
+        "page":       page,
+        "per_page":   PER_PAGE,
+        "time":       time.time(),
+    }
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/122.0.0.0 Safari/537.36"
+        ),
+        "Accept":          "application/json, text/plain, */*",
+        "Accept-Language": "fr-BE,fr;q=0.9",
+        "Referer":         f"{VINTED_BASE_URL}/membre/{VINTED_USER_ID}-{VINTED_USERNAME}/infos",
+        "X-Requested-With": "XMLHttpRequest",
+    }
+    resp = session.get(url, params=params, headers=headers, timeout=15)
+    resp.raise_for_status()
+
+    # Vinted peut renvoyer du HTML (blocage Cloudflare) au lieu de JSON
+    content_type = resp.headers.get("Content-Type", "")
+    if "json" not in content_type:
+        raise ValueError(f"Reponse non-JSON (Content-Type: {content_type}) — IP peut-etre bloquee")
+
+    data = resp.json()
+    return data.get("items", [])
+
+def send_github_alert(reason: str):
     import urllib.request as _req
     github_token = os.environ.get("GITHUB_TOKEN", "")
     github_repo  = os.environ.get("GITHUB_REPOSITORY", "")
@@ -77,8 +132,8 @@ def send_github_alert(reason):
         "## Scrapper en echec\n\n"
         f"**Raison :** {reason}\n"
         f"**Date :** {datetime.now().strftime('%d/%m/%Y %H:%M')}\n\n"
-        "Vinted a peut-etre change son API ou bloque les IPs GitHub.\n\n"
-        f"[Relancer le scrapper](https://github.com/{github_repo}/actions)"
+        "Vinted a peut-etre change son API ou bloque les IPs GitHub Actions.\n\n"
+        f"[Relancer](https://github.com/{github_repo}/actions)"
     )
     try:
         payload = json.dumps({
@@ -90,9 +145,9 @@ def send_github_alert(reason):
             f"https://api.github.com/repos/{github_repo}/issues",
             data=payload,
             headers={
-                "Authorization":  f"token {github_token}",
-                "Accept":         "application/vnd.github.v3+json",
-                "Content-Type":   "application/json",
+                "Authorization": f"token {github_token}",
+                "Accept":        "application/vnd.github.v3+json",
+                "Content-Type":  "application/json",
             },
             method="POST",
         )
@@ -107,62 +162,68 @@ def run():
     print(f"  {datetime.now().strftime('%d/%m/%Y %H:%M')}")
     print("=" * 52)
 
-    print("  Initialisation client Vinted BE...")
+    # 1. Obtenir les cookies d'authentification
+    print("  Recuperation des cookies Vinted...")
     try:
-        vinted = Vinted(domain="be")
+        cookies = get_session_cookies()
+        print(f"  {len(cookies)} cookie(s) recupere(s): {list(cookies.keys())}")
     except Exception as e:
-        msg = f"Impossible d'initialiser Vinted: {e}"
+        msg = f"Impossible d'obtenir les cookies: {e}"
         print(f"[ERREUR] {msg}")
         send_github_alert(msg)
         sys.exit(1)
 
+    # 2. Creer une session requests avec les cookies
+    session = requests.Session()
+    session.cookies.update(cookies)
+
+    # 3. Scraper les pages
     print(f"  Recherche articles vendeur {VINTED_USER_ID}...")
     articles, seen = [], set()
 
     try:
         page = 1
         while len(articles) < MAX_ITEMS:
-            search_url = (
-                f"https://www.vinted.be/api/v2/catalog/items"
-                f"?user_id={VINTED_USER_ID}"
-                f"&order=newest_first"
-                f"&page={page}"
-                f"&per_page=20"
-            )
-            result = vinted.search(url=search_url)
-            items  = getattr(result, "items", [])
+            raw_items = fetch_page(session, page)
 
-            if not items:
+            if not raw_items:
                 print(f"  Fin a la page {page} (0 item)")
                 break
 
-            for raw in items:
+            for raw in raw_items:
                 art = format_item(raw)
                 if art["id"] not in seen:
                     seen.add(art["id"])
                     articles.append(art)
 
-            print(f"  Page {page} -> {len(items)} items | Cumul: {len(articles)}")
+            print(f"  Page {page} -> {len(raw_items)} items | Cumul: {len(articles)}")
             page += 1
             time.sleep(DELAY)
 
+    except ValueError as e:
+        # IP bloquee ou reponse inattendue
+        msg = str(e)
+        print(f"[ERREUR] {msg}")
+        send_github_alert(msg)
+        sys.exit(1)
     except Exception as e:
         if len(articles) == 0:
-            msg = f"Erreur scraping: {e}"
+            msg = f"Erreur scraping page {page}: {e}"
             print(f"[ERREUR] {msg}")
             send_github_alert(msg)
             sys.exit(1)
         else:
-            print(f"  [WARN] Arret apres erreur: {e}")
+            print(f"  [WARN] Arret apres erreur a la page {page}: {e}")
 
     if len(articles) == 0:
-        send_github_alert("0 article recupere - Vinted bloque peut-etre les IPs GitHub Actions")
+        send_github_alert("0 article recupere")
         sys.exit(1)
 
+    # 4. Sauvegarde
     output = {
         "meta": {
             "source":     "Vinted",
-            "profil":     f"{VINTED_DOMAIN}/member/{VINTED_USER_ID}-{VINTED_USERNAME}",
+            "profil":     f"{VINTED_BASE_URL}/member/{VINTED_USER_ID}-{VINTED_USERNAME}",
             "total":      len(articles),
             "mis_a_jour": datetime.now().strftime("%d/%m/%Y %H:%M"),
             "statut":     "ok",
