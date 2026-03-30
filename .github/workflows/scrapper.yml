@@ -2,8 +2,8 @@ name: Scrapper Vinted - PheeA Fashion
 
 on:
   schedule:
-    - cron: '0 * * * *'   # Toutes les heures
-  workflow_dispatch:        # Bouton manuel dans GitHub
+    - cron: '0 * * * *'
+  workflow_dispatch:
 
 jobs:
   scrape:
@@ -22,7 +22,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install curl_cffi beautifulsoup4
+        run: pip install vinted-api-wrapper
 
       - name: Run scrapper
         env:
