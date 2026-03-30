@@ -3,10 +3,18 @@
 SCRAPPER VINTED - PheeA Fashion
 Auto-authentification : recupere un token anonyme a chaque execution.
 Aucun cookie a maintenir. Tourne sur GitHub Actions toutes les heures.
+
+Dependances : pip install curl_cffi
 """
 
-import requests, json, time, re, os, sys
+import json, time, re, os, sys
 from datetime import datetime
+
+try:
+    from curl_cffi import requests
+except ImportError:
+    print("[ERREUR] Installe curl_cffi : pip install curl_cffi")
+    sys.exit(1)
 
 VINTED_USER_ID  = "3138419705"
 VINTED_USERNAME = "pheeafashion"
@@ -26,7 +34,8 @@ BASE_HEADERS = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
 }
 
-SESSION = requests.Session()
+# curl_cffi imite le TLS de Chrome => contourne la detection JA3/JA4
+SESSION = requests.Session(impersonate="chrome124")
 SESSION.headers.update(BASE_HEADERS)
 
 CAT_MAP = {
@@ -48,8 +57,8 @@ def detect_category(url, title):
 
 def get_anon_token():
     """
-    Visite la page profil publique pour recuperer un token anonyme.
-    Vinted set automatiquement les cookies de session pour tout visiteur.
+    Visite la page profil publique pour recuperer un token anonyme
+    et les cookies de session Vinted.
     """
     print("  Recuperation du token anonyme...")
     profile_url = f"{VINTED_DOMAIN}/member/{VINTED_USER_ID}-{VINTED_USERNAME}"
@@ -64,12 +73,16 @@ def get_anon_token():
         cookies = dict(SESSION.cookies)
         print(f"  Cookies recus: {list(cookies.keys())}")
 
+        if "_vinted_be_session" not in cookies:
+            print("  [WARN] Cookie _vinted_be_session absent - l'IP est peut-etre bloquee")
+
         # Chercher CSRF token dans le HTML
         csrf = ""
         patterns = [
-            'csrf-token" content="([^"]+)"',
-            '"CSRF_TOKEN":"([^"]+)"',
-            'data-csrf="([^"]+)"',
+            r'csrf-token" content="([^"]+)"',
+            r'"CSRF_TOKEN":"([^"]+)"',
+            r'data-csrf="([^"]+)"',
+            r'"csrfToken":"([^"]+)"',
         ]
         for pattern in patterns:
             m = re.search(pattern, r.text)
@@ -92,19 +105,32 @@ def get_anon_token():
         return False, str(e)
 
 def scrape_page(page):
+    """
+    Endpoint correct pour les articles d'un vendeur specifique :
+    /api/v2/users/{USER_ID}/items  (et non /api/v2/catalog/items?user_id=)
+    """
     url = (
-        f"{VINTED_DOMAIN}/api/v2/catalog/items"
-        f"?user_id={VINTED_USER_ID}&page={page}&per_page=20&order=newest_first"
+        f"{VINTED_DOMAIN}/api/v2/users/{VINTED_USER_ID}/items"
+        f"?page={page}&per_page=20&order=newest_first"
     )
     try:
         r = SESSION.get(url, timeout=20)
         print(f"  Page {page} -> {r.status_code}")
 
+        if r.status_code == 401 or r.status_code == 403:
+            print(f"  [WARN] Token expire ou IP bloquee ({r.status_code}), tentative refresh...")
+            ok, msg = get_anon_token()
+            if ok:
+                r = SESSION.get(url, timeout=20)
+                print(f"  Page {page} apres refresh -> {r.status_code}")
+
         if r.status_code == 200:
             data = r.json()
-            for key in ["items", "data", "products", "listings"]:
-                if key in data and isinstance(data[key], list) and data[key]:
-                    return data[key]
+            # L'endpoint /users/{id}/items retourne {"items": [...]}
+            items = data.get("items", [])
+            if items and isinstance(items, list):
+                return items
+            # Fallback : parcourir toutes les cles liste
             for key, val in data.items():
                 if isinstance(val, list) and val and isinstance(val[0], dict) and "title" in val[0]:
                     return val
@@ -146,6 +172,7 @@ def format_item(raw):
 
 def send_github_alert(reason):
     """Cree une issue GitHub si le scrapping echoue."""
+    import urllib.request
     github_token = os.environ.get("GITHUB_TOKEN", "")
     github_repo  = os.environ.get("GITHUB_REPOSITORY", "")
     if not github_token or not github_repo:
@@ -163,23 +190,27 @@ def send_github_alert(reason):
         f"[Relancer le scrapper](https://github.com/{github_repo}/actions)"
     )
     try:
-        requests.post(
+        # On utilise urllib ici pour eviter un conflit avec le SESSION curl_cffi
+        import json as _json
+        payload = _json.dumps({
+            "title": f"Scrapper en echec — {datetime.now().strftime('%d/%m/%Y')}",
+            "body": body,
+            "labels": ["scrapper-error"]
+        }).encode()
+        req = urllib.request.Request(
             f"https://api.github.com/repos/{github_repo}/issues",
+            data=payload,
             headers=headers,
-            json={
-                "title": f"Scrapper en echec — {datetime.now().strftime('%d/%m/%Y')}",
-                "body": body,
-                "labels": ["scrapper-error"]
-            },
-            timeout=10
+            method="POST"
         )
+        urllib.request.urlopen(req, timeout=10)
         print("  Alerte GitHub envoyee")
     except Exception as e:
         print(f"  Erreur alerte: {e}")
 
 def run():
     print("=" * 52)
-    print("  SCRAPPER VINTED - PheeA Fashion (sans cookie)")
+    print("  SCRAPPER VINTED - PheeA Fashion")
     print(f"  {datetime.now().strftime('%d/%m/%Y %H:%M')}")
     print("=" * 52)
 
