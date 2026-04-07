@@ -1,29 +1,62 @@
 #!/usr/bin/env python3
 """
-SCRAPPER VINTED - PheeA Fashion
+SCRAPPER VINTED - Profil configurable
 Dependances : pip install requests
+
+Usage:
+  python scrapper.py                                          # utilise PROFIL_URL par defaut
+  python scrapper.py https://www.vinted.be/member/3138419705-pheeafashion
 """
 
-import json, time, os, sys
+import json, time, os, sys, re
 import requests
 from datetime import datetime
 
-VINTED_USER_ID  = "3138419705"
-VINTED_USERNAME = "pheeafashion"
-BASE_URL        = "https://www.vinted.be"
-PROFIL_URL      = f"{BASE_URL}/member/{VINTED_USER_ID}-{VINTED_USERNAME}?tab=closet"
-OUTPUT_FILE     = "data.json"
-MAX_ITEMS       = 200
-DELAY           = 1.5
+# ──────────────────────────────────────────────
+#  ✏️  COLLE TON LIEN ICI (ou passe-le en argument)
+# ──────────────────────────────────────────────
+DEFAULT_PROFIL_URL = "https://www.vinted.be/member/3138419705-pheeafashion"
+# ──────────────────────────────────────────────
+
+OUTPUT_FILE = "data.json"
+MAX_ITEMS   = 200
+DELAY       = 1.5
 
 HEADERS = {
     "User-Agent":      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0 Safari/537.36",
     "Accept":          "application/json, text/plain, */*",
     "Accept-Language": "fr-BE,fr;q=0.9,en;q=0.8",
-    "Referer":         f"{BASE_URL}/",
-    "Origin":          BASE_URL,
+    "Referer":         "https://www.vinted.be/",
+    "Origin":          "https://www.vinted.be",
     "DNT":             "1",
 }
+
+# ── Parsing du lien ───────────────────────────────────────────────────────────
+
+def parse_profil_url(url):
+    """
+    Extrait user_id et username depuis un lien Vinted de la forme :
+      https://www.vinted.be/member/3138419705-pheeafashion
+      https://www.vinted.be/member/3138419705-pheeafashion?tab=closet
+    Retourne (user_id: str, username: str, base_domain: str)
+    """
+    match = re.search(r"(https?://[^/]+)/member/(\d+)-([^/?#]+)", url)
+    if not match:
+        print(f"[ERREUR] Lien invalide : {url}")
+        print("  Format attendu : https://www.vinted.be/member/USERID-USERNAME")
+        sys.exit(1)
+    base  = match.group(1)  # ex: https://www.vinted.be
+    uid   = match.group(2)  # ex: 3138419705
+    uname = match.group(3)  # ex: pheeafashion
+    return uid, uname, base
+
+# ── Resolution du lien (argument CLI ou defaut) ───────────────────────────────
+
+raw_url                           = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_PROFIL_URL
+VINTED_USER_ID, VINTED_USERNAME, BASE_URL = parse_profil_url(raw_url)
+PROFIL_URL = f"{BASE_URL}/member/{VINTED_USER_ID}-{VINTED_USERNAME}?tab=closet"
+
+# ─────────────────────────────────────────────────────────────────────────────
 
 CAT_URL = {
     "women": "Femme", "femme": "Femme", "ladies": "Femme",
@@ -83,14 +116,13 @@ def detect_category(url, title):
     return "Femme"
 
 def to_float(val):
-    """Convertit n'importe quelle valeur en float, retourne None si impossible."""
     if val is None:
         return None
     if isinstance(val, (int, float)):
         f = float(val)
         return f if f > 0 else None
     if isinstance(val, str):
-        cleaned = val.replace(",", ".").replace(" ", "").replace("\u202f", "")
+        cleaned = val.replace(",", ".").replace(" ", "").replace("\\u202f", "")
         try:
             f = float(cleaned)
             return f if f > 0 else None
@@ -99,52 +131,35 @@ def to_float(val):
     return None
 
 def extract_price(raw):
-    """
-    L'API Vinted peut renvoyer le prix sous de nombreux formats.
-    On teste tous les champs connus dans l'ordre de fiabilite.
-    """
     candidates = []
-
-    # 1. price_numeric (float direct)
     candidates.append(raw.get("price_numeric"))
-
-    # 2. price (peut etre un dict {"amount": "12.50"} OU un string/float direct)
     p = raw.get("price")
     if isinstance(p, dict):
         candidates.append(p.get("amount"))
         candidates.append(p.get("currency_amount"))
     else:
         candidates.append(p)
-
-    # 3. total_item_price (dict {"amount": "12.50"})
     tip = raw.get("total_item_price")
     if isinstance(tip, dict):
         candidates.append(tip.get("amount"))
         candidates.append(tip.get("currency_amount"))
     else:
         candidates.append(tip)
-
-    # 4. item_price (autre variante)
     ip = raw.get("item_price")
     if isinstance(ip, dict):
         candidates.append(ip.get("amount"))
     else:
         candidates.append(ip)
-
-    # 5. service_fee (parfois le seul champ present, on l'ignore)
-    # Cherche dans tous les sous-dicts restants
     for key in ("original_price", "discount_price", "suggested_price"):
         v = raw.get(key)
         if isinstance(v, dict):
             candidates.append(v.get("amount"))
         else:
             candidates.append(v)
-
     for c in candidates:
         result = to_float(c)
         if result is not None:
             return round(result, 2)
-
     return 0.0
 
 def format_item(raw):
@@ -158,7 +173,6 @@ def format_item(raw):
         img = photo.get("url") or photo.get("full_size_url") or ""
 
     if price == 0.0:
-        # Log pour debug - affiche tous les champs avec "price" dans le nom
         price_fields = {k: v for k, v in raw.items() if "price" in k.lower() or "fee" in k.lower()}
         print(f"    [DEBUG PRIX] '{title[:35]}' | champs prix: {price_fields}")
 
@@ -191,9 +205,9 @@ def send_github_alert(reason):
     if not github_token or not github_repo:
         return
     body = (
-        "## Scrapper en echec\n\n"
-        f"**Raison :** {reason}\n"
-        f"**Date :** {datetime.now().strftime('%d/%m/%Y %H:%M')}\n\n"
+        "## Scrapper en echec\\n\\n"
+        f"**Raison :** {reason}\\n"
+        f"**Date :** {datetime.now().strftime('%d/%m/%Y %H:%M')}\\n\\n"
         f"[Relancer le scrapper](https://github.com/{github_repo}/actions)"
     )
     try:
@@ -219,7 +233,8 @@ def send_github_alert(reason):
 
 def run():
     print("=" * 52)
-    print("  SCRAPPER VINTED - PheeA Fashion")
+    print(f"  SCRAPPER VINTED - {VINTED_USERNAME}")
+    print(f"  Profil : {PROFIL_URL}")
     print(f"  {datetime.now().strftime('%d/%m/%Y %H:%M')}")
     print("=" * 52)
 
@@ -311,7 +326,7 @@ def run():
     with open(path, "w", encoding="utf-8") as f:
         json.dump(output, f, ensure_ascii=False, indent=2)
 
-    prix_ok = sum(1 for a in articles if a["prix"] > 0)
+    prix_ok   = sum(1 for a in articles if a["prix"] > 0)
     prix_zero = len(articles) - prix_ok
     print(f"\n  {len(articles)} articles sauvegardes")
     print(f"  Avec prix: {prix_ok} | Sans prix: {prix_zero}")
