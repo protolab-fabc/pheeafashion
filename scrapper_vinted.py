@@ -1,54 +1,26 @@
 #!/usr/bin/env python3
 """
-SCRAPPER VINTED - Profil configurable
-Dependances : pip install requests
-
-Usage:
-  python scrapper.py                                          # utilise PROFIL_URL par defaut
-  python scrapper.py https://www.vinted.be/member/3138419705-pheeafashion
+SCRAPPER VINTED - Profil configurable via vinted-api-wrapper
+Dependances : pip install requests vinted-api-wrapper
 """
 
-import json, time, os, sys, re
-import requests
+import json, os, sys, re, time
 from datetime import datetime
 
-# ──────────────────────────────────────────────
-#  ✏️  COLLE TON LIEN ICI (ou passe-le en argument)
-# ──────────────────────────────────────────────
 DEFAULT_PROFIL_URL = "https://www.vinted.be/member/3138419705-pheeafashion"
-# ──────────────────────────────────────────────
 
 OUTPUT_FILE = "data.json"
 MAX_ITEMS   = 200
-DELAY       = 1.5
-
-HEADERS = {
-    "User-Agent":      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0 Safari/537.36",
-    "Accept":          "application/json, text/plain, */*",
-    "Accept-Language": "fr-BE,fr;q=0.9,en;q=0.8",
-    "DNT":             "1",
-}
 
 # ── Parsing du lien ───────────────────────────────────────────────────────────
 
 def parse_profil_url(url):
-    """
-    Extrait user_id et username depuis un lien Vinted de la forme :
-      https://www.vinted.be/member/3138419705-pheeafashion
-      https://www.vinted.be/member/3138419705-pheeafashion?tab=closet
-    Retourne (user_id: str, username: str, base_domain: str)
-    """
     match = re.search(r"(https?://[^/]+)/member/(\d+)-([^/?#]+)", url)
     if not match:
         print(f"[ERREUR] Lien invalide : {url}")
         print("  Format attendu : https://www.vinted.be/member/USERID-USERNAME")
         sys.exit(1)
-    base  = match.group(1)
-    uid   = match.group(2)
-    uname = match.group(3)
-    return uid, uname, base
-
-# ── Resolution du lien (argument CLI ou defaut) ───────────────────────────────
+    return match.group(2), match.group(3), match.group(1)
 
 raw_url = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_PROFIL_URL
 VINTED_USER_ID, VINTED_USERNAME, BASE_URL = parse_profil_url(raw_url)
@@ -68,7 +40,6 @@ CAT_URL = {
     "accessory": "Accessoires", "bags": "Accessoires", "jewelry": "Accessoires",
     "bijoux": "Accessoires", "shoes": "Accessoires", "chaussures": "Accessoires",
 }
-
 CAT_TITLE_ACCESSOIRES = [
     "sac", "pochette", "ceinture", "chapeau", "bonnet", "echarpe", "foulard",
     "bijou", "collier", "bague", "bracelet", "montre", "lunettes", "lunette",
@@ -94,35 +65,28 @@ CAT_TITLE_FEMME = [
 ]
 
 def detect_category(url, title):
-    url_l   = url.lower()
-    title_l = title.lower()
+    url_l, title_l = url.lower(), title.lower()
     for key, val in CAT_URL.items():
         if key in url_l:
             return val
     for w in CAT_TITLE_ACCESSOIRES:
-        if w in title_l:
-            return "Accessoires"
+        if w in title_l: return "Accessoires"
     for w in CAT_TITLE_ENFANT:
-        if w in title_l:
-            return "Enfant"
+        if w in title_l: return "Enfant"
     for w in CAT_TITLE_HOMME:
-        if w in title_l:
-            return "Homme"
+        if w in title_l: return "Homme"
     for w in CAT_TITLE_FEMME:
-        if w in title_l:
-            return "Femme"
+        if w in title_l: return "Femme"
     return "Femme"
 
 def to_float(val):
-    if val is None:
-        return None
+    if val is None: return None
     if isinstance(val, (int, float)):
         f = float(val)
         return f if f > 0 else None
     if isinstance(val, str):
-        cleaned = val.replace(",", ".").replace(" ", "").replace("\\u202f", "")
         try:
-            f = float(cleaned)
+            f = float(val.replace(",", ".").replace(" ", "").replace("\u202f", ""))
             return f if f > 0 else None
         except Exception:
             return None
@@ -137,30 +101,20 @@ def extract_price(raw):
         candidates.append(p.get("currency_amount"))
     else:
         candidates.append(p)
-    tip = raw.get("total_item_price")
-    if isinstance(tip, dict):
-        candidates.append(tip.get("amount"))
-        candidates.append(tip.get("currency_amount"))
-    else:
-        candidates.append(tip)
-    ip = raw.get("item_price")
-    if isinstance(ip, dict):
-        candidates.append(ip.get("amount"))
-    else:
-        candidates.append(ip)
-    for key in ("original_price", "discount_price", "suggested_price"):
+    for key in ("total_item_price", "item_price", "original_price"):
         v = raw.get(key)
-        if isinstance(v, dict):
-            candidates.append(v.get("amount"))
-        else:
-            candidates.append(v)
+        candidates.append(v.get("amount") if isinstance(v, dict) else v)
     for c in candidates:
-        result = to_float(c)
-        if result is not None:
-            return round(result, 2)
+        r = to_float(c)
+        if r is not None:
+            return round(r, 2)
     return 0.0
 
 def format_item(raw):
+    # vinted-api-wrapper retourne un objet avec attributs OU un dict selon la version
+    if not isinstance(raw, dict):
+        raw = raw.__dict__ if hasattr(raw, "__dict__") else {}
+
     url   = raw.get("url", "") or ""
     title = raw.get("title", "Article") or "Article"
     price = extract_price(raw)
@@ -171,8 +125,8 @@ def format_item(raw):
         img = photo.get("url") or photo.get("full_size_url") or ""
 
     if price == 0.0:
-        price_fields = {k: v for k, v in raw.items() if "price" in k.lower() or "fee" in k.lower()}
-        print(f"    [DEBUG PRIX] '{title[:35]}' | champs prix: {price_fields}")
+        price_fields = {k: v for k, v in raw.items() if "price" in k.lower()}
+        print(f"    [DEBUG PRIX] '{title[:35]}' | champs: {price_fields}")
 
     return {
         "id":       str(raw.get("id", int(time.time()))),
@@ -186,48 +140,25 @@ def format_item(raw):
         "marque":   raw.get("brand_title", "") or "",
     }
 
-def get_session():
-    session = requests.Session()
-    # Headers de base (sans Referer/Origin fixes — on les met dynamiquement)
-    session.headers.update(HEADERS)
-    session.headers.update({
-        "Referer": f"{BASE_URL}/",
-        "Origin":  BASE_URL,
-    })
-    # Visite la page du profil vendeur (pas juste l'accueil) pour avoir
-    # les bons cookies de session liés à ce profil
-    r = session.get(PROFIL_URL, timeout=15)
-    r.raise_for_status()
-    print(f"  Page profil: {r.status_code} | Cookies: {list(session.cookies.keys())}")
-    if "_vinted_be_session" not in session.cookies:
-        print("  [WARN] Cookie _vinted_be_session absent")
-    return session
-
 def send_github_alert(reason):
     import urllib.request as _req
     github_token = os.environ.get("GITHUB_TOKEN", "")
     github_repo  = os.environ.get("GITHUB_REPOSITORY", "")
     if not github_token or not github_repo:
         return
-    body = (
-        "## Scrapper en echec\\n\\n"
-        f"**Raison :** {reason}\\n"
-        f"**Date :** {datetime.now().strftime('%d/%m/%Y %H:%M')}\\n\\n"
-        f"[Relancer le scrapper](https://github.com/{github_repo}/actions)"
-    )
     try:
         payload = json.dumps({
             "title":  f"Scrapper en echec - {datetime.now().strftime('%d/%m/%Y')}",
-            "body":   body,
+            "body":   f"## Scrapper en echec\n\n**Raison :** {reason}\n**Date :** {datetime.now().strftime('%d/%m/%Y %H:%M')}",
             "labels": ["scrapper-error"],
         }).encode()
         req = _req.Request(
             f"https://api.github.com/repos/{github_repo}/issues",
             data=payload,
             headers={
-                "Authorization":  f"token {github_token}",
-                "Accept":         "application/vnd.github.v3+json",
-                "Content-Type":   "application/json",
+                "Authorization": f"token {github_token}",
+                "Accept":        "application/vnd.github.v3+json",
+                "Content-Type":  "application/json",
             },
             method="POST",
         )
@@ -243,64 +174,52 @@ def run():
     print(f"  {datetime.now().strftime('%d/%m/%Y %H:%M')}")
     print("=" * 52)
 
-    print("  Initialisation session Vinted...")
+    # ── Import du wrapper ──────────────────────────────
     try:
-        session = get_session()
+        from vinted_scraper import VintedScraper
+    except ImportError:
+        print("[ERREUR] Package manquant. Lance : pip install vinted-scraper")
+        sys.exit(1)
+
+    # Domaine extrait du lien (vinted.be, vinted.fr, etc.)
+    domain = BASE_URL.replace("https://", "").replace("http://", "")
+
+    print(f"  Connexion via vinted-scraper sur {domain}...")
+    try:
+        scraper = VintedScraper(f"https://{domain}")
     except Exception as e:
-        msg = f"Impossible d'initialiser la session: {e}"
+        msg = f"Impossible d'initialiser le scraper: {e}"
         print(f"[ERREUR] {msg}")
         send_github_alert(msg)
         sys.exit(1)
 
-    # ✅ Endpoint correct : /api/v2/users/{user_id}/items
-    # (et non /api/v2/catalog/items?user_id=... qui retourne le catalogue global)
-    API_URL = f"{BASE_URL}/api/v2/users/{VINTED_USER_ID}/items"
-    print(f"  Endpoint API : {API_URL}")
-    print(f"  Recherche articles de {VINTED_USERNAME} ({VINTED_USER_ID})...")
-
+    print(f"  Recuperation des articles de {VINTED_USERNAME} ({VINTED_USER_ID})...")
     articles, seen = [], set()
 
     try:
         page = 1
         while len(articles) < MAX_ITEMS:
+            # vinted-scraper expose fetch_user_items(user_id, page, per_page)
             params = {
+                "user_id":  VINTED_USER_ID,
                 "page":     page,
                 "per_page": 20,
             }
-            r = session.get(API_URL, params=params, timeout=20)
+            raw_items = scraper.fetch_user_items(**params)
 
-            if r.status_code == 401:
-                print("  [WARN] 401 - tentative re-auth...")
-                session = get_session()
-                time.sleep(3)
-                continue
-
-            if r.status_code == 404:
-                print(f"  Page {page} -> 404, fin")
-                break
-
-            r.raise_for_status()
-
-            try:
-                data = r.json()
-            except Exception as e:
-                print(f"  [WARN] JSON invalide page {page}: {e}")
-                break
-
-            items = data.get("items", [])
-            if not items:
+            if not raw_items:
                 print(f"  Fin a la page {page} (0 item)")
                 break
 
-            for raw in items:
-                art = format_item(raw)
+            for raw in raw_items:
+                art = format_item(raw if isinstance(raw, dict) else vars(raw))
                 if art["id"] not in seen:
                     seen.add(art["id"])
                     articles.append(art)
 
-            print(f"  Page {page} -> {len(items)} items | Cumul: {len(articles)}")
+            print(f"  Page {page} -> {len(raw_items)} items | Cumul: {len(articles)}")
             page += 1
-            time.sleep(DELAY)
+            time.sleep(1.5)
 
     except Exception as e:
         if len(articles) == 0:
@@ -312,7 +231,7 @@ def run():
             print(f"  [WARN] Arret apres erreur: {e}")
 
     if len(articles) == 0:
-        send_github_alert("0 article recupere - Vinted bloque les IPs GitHub Actions")
+        send_github_alert("0 article recupere")
         sys.exit(1)
 
     output = {
