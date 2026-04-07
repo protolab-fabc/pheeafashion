@@ -43,7 +43,6 @@ CAT_URL = {
     "accessory": "Accessoires", "bags": "Accessoires", "jewelry": "Accessoires",
     "bijoux": "Accessoires", "shoes": "Accessoires", "chaussures": "Accessoires",
 }
-
 CAT_TITLE_ACCESSOIRES = [
     "sac", "pochette", "ceinture", "chapeau", "bonnet", "echarpe", "foulard",
     "bijou", "collier", "bague", "bracelet", "montre", "lunettes", "lunette",
@@ -185,15 +184,32 @@ def send_github_alert(reason):
     except Exception as e:
         print(f"  Erreur alerte: {e}")
 
+# Compteur global pour ne logger qu'une seule fois la structure
+_debug_logged = False
+
 def is_good_seller_item(item):
-    if str(item.get("user_id", "")) == str(VINTED_USER_ID):
-        return True
-    if str(item.get("seller_id", "")) == str(VINTED_USER_ID):
-        return True
-    user = item.get("user")
-    if isinstance(user, dict) and str(user.get("id", "")) == str(VINTED_USER_ID):
-        return True
-    return False
+    global _debug_logged
+    # DEBUG : affiche la structure du premier item recu pour comprendre les champs vendeur
+    if not _debug_logged:
+        seller_keys = {k: v for k, v in item.items() if any(
+            x in k.lower() for x in ("user", "seller", "member", "owner")
+        )}
+        print(f"  [DEBUG] Champs vendeur du 1er item : {json.dumps(seller_keys, ensure_ascii=False)[:500]}")
+        _debug_logged = True
+
+    # Tous les champs possibles ou peut se cacher l'id vendeur
+    checks = [
+        str(item.get("user_id", "")),
+        str(item.get("seller_id", "")),
+        str(item.get("member_id", "")),
+        str(item.get("owner_id", "")),
+    ]
+    user = item.get("user") or item.get("seller") or item.get("member") or item.get("owner")
+    if isinstance(user, dict):
+        checks.append(str(user.get("id", "")))
+        checks.append(str(user.get("login", "")))
+
+    return str(VINTED_USER_ID) in checks
 
 def run():
     print("=" * 52)
@@ -256,6 +272,14 @@ def run():
                 break
 
             items = data.get("items", [])
+
+            # DEBUG page 1 : affiche le nombre total declare et les cles du 1er item
+            if page == 1:
+                pagination = data.get("pagination", {})
+                print(f"  [DEBUG] pagination={pagination}")
+                if items:
+                    print(f"  [DEBUG] cles 1er item : {list(items[0].keys())}")
+
             items_vendeur = [item for item in items if is_good_seller_item(item)]
 
             if not items_vendeur:
@@ -286,7 +310,7 @@ def run():
             print(f"  [WARN] Arret apres erreur: {e}")
 
     if len(articles) == 0:
-        send_github_alert("0 article recupere")
+        send_github_alert("0 article recupere - voir logs DEBUG pour structure API")
         sys.exit(1)
 
     output = {
