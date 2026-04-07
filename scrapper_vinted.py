@@ -26,8 +26,6 @@ HEADERS = {
     "User-Agent":      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0 Safari/537.36",
     "Accept":          "application/json, text/plain, */*",
     "Accept-Language": "fr-BE,fr;q=0.9,en;q=0.8",
-    "Referer":         "https://www.vinted.be/",
-    "Origin":          "https://www.vinted.be",
     "DNT":             "1",
 }
 
@@ -45,14 +43,14 @@ def parse_profil_url(url):
         print(f"[ERREUR] Lien invalide : {url}")
         print("  Format attendu : https://www.vinted.be/member/USERID-USERNAME")
         sys.exit(1)
-    base  = match.group(1)  # ex: https://www.vinted.be
-    uid   = match.group(2)  # ex: 3138419705
-    uname = match.group(3)  # ex: pheeafashion
+    base  = match.group(1)
+    uid   = match.group(2)
+    uname = match.group(3)
     return uid, uname, base
 
 # ── Resolution du lien (argument CLI ou defaut) ───────────────────────────────
 
-raw_url                           = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_PROFIL_URL
+raw_url = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_PROFIL_URL
 VINTED_USER_ID, VINTED_USERNAME, BASE_URL = parse_profil_url(raw_url)
 PROFIL_URL = f"{BASE_URL}/member/{VINTED_USER_ID}-{VINTED_USERNAME}?tab=closet"
 
@@ -190,10 +188,17 @@ def format_item(raw):
 
 def get_session():
     session = requests.Session()
+    # Headers de base (sans Referer/Origin fixes — on les met dynamiquement)
     session.headers.update(HEADERS)
-    r = session.get(BASE_URL, timeout=15)
+    session.headers.update({
+        "Referer": f"{BASE_URL}/",
+        "Origin":  BASE_URL,
+    })
+    # Visite la page du profil vendeur (pas juste l'accueil) pour avoir
+    # les bons cookies de session liés à ce profil
+    r = session.get(PROFIL_URL, timeout=15)
     r.raise_for_status()
-    print(f"  Page accueil: {r.status_code} | Cookies: {list(session.cookies.keys())}")
+    print(f"  Page profil: {r.status_code} | Cookies: {list(session.cookies.keys())}")
     if "_vinted_be_session" not in session.cookies:
         print("  [WARN] Cookie _vinted_be_session absent")
     return session
@@ -238,7 +243,7 @@ def run():
     print(f"  {datetime.now().strftime('%d/%m/%Y %H:%M')}")
     print("=" * 52)
 
-    print("  Initialisation session Vinted BE...")
+    print("  Initialisation session Vinted...")
     try:
         session = get_session()
     except Exception as e:
@@ -247,23 +252,22 @@ def run():
         send_github_alert(msg)
         sys.exit(1)
 
-    print(f"  Recherche articles vendeur {VINTED_USER_ID}...")
+    # ✅ Endpoint correct : /api/v2/users/{user_id}/items
+    # (et non /api/v2/catalog/items?user_id=... qui retourne le catalogue global)
+    API_URL = f"{BASE_URL}/api/v2/users/{VINTED_USER_ID}/items"
+    print(f"  Endpoint API : {API_URL}")
+    print(f"  Recherche articles de {VINTED_USERNAME} ({VINTED_USER_ID})...")
+
     articles, seen = [], set()
 
     try:
         page = 1
         while len(articles) < MAX_ITEMS:
             params = {
-                "user_id":  VINTED_USER_ID,
-                "order":    "newest_first",
                 "page":     page,
                 "per_page": 20,
             }
-            r = session.get(
-                f"{BASE_URL}/api/v2/catalog/items",
-                params=params,
-                timeout=20,
-            )
+            r = session.get(API_URL, params=params, timeout=20)
 
             if r.status_code == 401:
                 print("  [WARN] 401 - tentative re-auth...")
