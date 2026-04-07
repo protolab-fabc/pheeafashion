@@ -2,21 +2,13 @@
 """
 SCRAPPER VINTED - Profil configurable
 Dependances : pip install requests seleniumbase
-
-Usage:
-  python scrapper_vinted.py
-  python scrapper_vinted.py https://www.vinted.be/member/3138419705-pheeafashion
 """
 
 import json, time, os, sys, re
 import requests
 from datetime import datetime
 
-# ──────────────────────────────────────────────
-#  COLLE TON LIEN ICI (ou passe-le en argument)
-# ──────────────────────────────────────────────
 DEFAULT_PROFIL_URL = "https://www.vinted.be/member/3138419705-pheeafashion"
-# ──────────────────────────────────────────────
 
 OUTPUT_FILE = "data.json"
 DELAY = 1.5
@@ -32,7 +24,6 @@ def parse_profil_url(url):
     match = re.search(r"(https?://[^/]+)/member/(\d+)-([^/?#]+)", url)
     if not match:
         print(f"[ERREUR] Lien invalide : {url}")
-        print("  Format attendu : https://www.vinted.be/member/USERID-USERNAME")
         sys.exit(1)
     return match.group(2), match.group(3), match.group(1)
 
@@ -239,9 +230,9 @@ def run():
             r = session.get(
                 API_URL,
                 params={
-                    "user_id": VINTED_USER_ID,
-                    "order":   "newest_first",
-                    "page":    page,
+                    "user_id":  VINTED_USER_ID,
+                    "order":    "newest_first",
+                    "page":     page,
                     "per_page": 20,
                 },
                 timeout=20,
