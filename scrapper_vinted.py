@@ -1,18 +1,26 @@
 #!/usr/bin/env python3
 """
-SCRAPPER VINTED - Profil configurable via vinted-api-wrapper
-Dependances : pip install requests vinted-api-wrapper
+SCRAPPER VINTED - Profil configurable
+Dependances : pip install cloudscraper
+
+Usage:
+  python scrapper.py
+  python scrapper.py https://www.vinted.be/member/3138419705-pheeafashion
 """
 
-import json, os, sys, re, time
+import json, time, os, sys, re
+import cloudscraper
 from datetime import datetime
 
+# ──────────────────────────────────────────────
+#  ✏️  COLLE TON LIEN ICI (ou passe-le en argument)
+# ──────────────────────────────────────────────
 DEFAULT_PROFIL_URL = "https://www.vinted.be/member/3138419705-pheeafashion"
+# ──────────────────────────────────────────────
 
 OUTPUT_FILE = "data.json"
 MAX_ITEMS   = 200
-
-# ── Parsing du lien ───────────────────────────────────────────────────────────
+DELAY       = 1.5
 
 def parse_profil_url(url):
     match = re.search(r"(https?://[^/]+)/member/(\d+)-([^/?#]+)", url)
@@ -67,8 +75,7 @@ CAT_TITLE_FEMME = [
 def detect_category(url, title):
     url_l, title_l = url.lower(), title.lower()
     for key, val in CAT_URL.items():
-        if key in url_l:
-            return val
+        if key in url_l: return val
     for w in CAT_TITLE_ACCESSOIRES:
         if w in title_l: return "Accessoires"
     for w in CAT_TITLE_ENFANT:
@@ -111,10 +118,6 @@ def extract_price(raw):
     return 0.0
 
 def format_item(raw):
-    # vinted-api-wrapper retourne un objet avec attributs OU un dict selon la version
-    if not isinstance(raw, dict):
-        raw = raw.__dict__ if hasattr(raw, "__dict__") else {}
-
     url   = raw.get("url", "") or ""
     title = raw.get("title", "Article") or "Article"
     price = extract_price(raw)
@@ -139,6 +142,29 @@ def format_item(raw):
         "taille":   raw.get("size_title",  "") or "",
         "marque":   raw.get("brand_title", "") or "",
     }
+
+def get_session():
+    """
+    cloudscraper imite un vrai navigateur et contourne DataDome/Cloudflare.
+    On visite d'abord la page du profil pour obtenir les cookies de session
+    liés à ce profil précis (et non l'accueil générique).
+    """
+    s = cloudscraper.create_scraper(
+        browser={
+            "browser": "chrome",
+            "platform": "windows",
+            "desktop": True,
+        }
+    )
+    s.headers.update({
+        "Accept-Language": "fr-BE,fr;q=0.9,en;q=0.8",
+        "DNT": "1",
+    })
+    print(f"  Visite de la page profil : {PROFIL_URL}")
+    r = s.get(PROFIL_URL, timeout=20)
+    r.raise_for_status()
+    print(f"  Statut: {r.status_code} | Cookies: {list(s.cookies.keys())}")
+    return s
 
 def send_github_alert(reason):
     import urllib.request as _req
@@ -174,52 +200,70 @@ def run():
     print(f"  {datetime.now().strftime('%d/%m/%Y %H:%M')}")
     print("=" * 52)
 
-    # ── Import du wrapper ──────────────────────────────
+    print("  Initialisation session via cloudscraper...")
     try:
-        from vinted_scraper import VintedScraper
-    except ImportError:
-        print("[ERREUR] Package manquant. Lance : pip install vinted-scraper")
-        sys.exit(1)
-
-    # Domaine extrait du lien (vinted.be, vinted.fr, etc.)
-    domain = BASE_URL.replace("https://", "").replace("http://", "")
-
-    print(f"  Connexion via vinted-scraper sur {domain}...")
-    try:
-        scraper = VintedScraper(f"https://{domain}")
+        session = get_session()
     except Exception as e:
-        msg = f"Impossible d'initialiser le scraper: {e}"
+        msg = f"Impossible d'initialiser la session: {e}"
         print(f"[ERREUR] {msg}")
         send_github_alert(msg)
         sys.exit(1)
 
-    print(f"  Recuperation des articles de {VINTED_USERNAME} ({VINTED_USER_ID})...")
+    # ✅ Endpoint correct avec session cloudscraper authentifiée
+    API_URL = f"{BASE_URL}/api/v2/users/{VINTED_USER_ID}/items"
+    print(f"  Endpoint : {API_URL}")
+
     articles, seen = [], set()
 
     try:
         page = 1
         while len(articles) < MAX_ITEMS:
-            # vinted-scraper expose fetch_user_items(user_id, page, per_page)
-            params = {
-                "user_id":  VINTED_USER_ID,
-                "page":     page,
-                "per_page": 20,
-            }
-            raw_items = scraper.fetch_user_items(**params)
+            r = session.get(
+                API_URL,
+                params={"page": page, "per_page": 20},
+                timeout=20,
+            )
 
-            if not raw_items:
+            if r.status_code == 401:
+                print("  [WARN] 401 - re-auth...")
+                session = get_session()
+                time.sleep(3)
+                continue
+
+            if r.status_code == 404:
+                print(f"  Page {page} -> 404, fin")
+                break
+
+            if r.status_code == 429:
+                retry = int(r.headers.get("Retry-After", 60))
+                print(f"  [WARN] Rate limit, attente {retry}s...")
+                time.sleep(retry)
+                continue
+
+            r.raise_for_status()
+
+            try:
+                data = r.json()
+            except Exception as e:
+                print(f"  [WARN] JSON invalide page {page}: {e}")
+                print(f"  Reponse brute: {r.text[:300]}")
+                break
+
+            items = data.get("items", [])
+            if not items:
                 print(f"  Fin a la page {page} (0 item)")
                 break
 
-            for raw in raw_items:
-                art = format_item(raw if isinstance(raw, dict) else vars(raw))
+            for raw in items:
+                art = format_item(raw)
                 if art["id"] not in seen:
                     seen.add(art["id"])
                     articles.append(art)
 
-            print(f"  Page {page} -> {len(raw_items)} items | Cumul: {len(articles)}")
+            total_pages = data.get("pagination", {}).get("total_pages", "?")
+            print(f"  Page {page}/{total_pages} -> {len(items)} items | Cumul: {len(articles)}")
             page += 1
-            time.sleep(1.5)
+            time.sleep(DELAY)
 
     except Exception as e:
         if len(articles) == 0:
