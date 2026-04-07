@@ -22,10 +22,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install requests
-        
-      - name: Install api wrapper
-        run: pip install vinted-api-wrapper
+        run: pip install cloudscraper
 
       - name: Run scrapper
         env:
