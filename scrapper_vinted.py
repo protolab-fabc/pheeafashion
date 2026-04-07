@@ -13,7 +13,7 @@ import requests
 from datetime import datetime
 
 # ──────────────────────────────────────────────
-#  ✏️  COLLE TON LIEN ICI (ou passe-le en argument)
+#  COLLE TON LIEN ICI (ou passe-le en argument)
 # ──────────────────────────────────────────────
 DEFAULT_PROFIL_URL = "https://www.vinted.be/member/3138419705-pheeafashion"
 # ──────────────────────────────────────────────
@@ -79,19 +79,25 @@ CAT_TITLE_FEMME = [
 def detect_category(url, title):
     url_l, title_l = url.lower(), title.lower()
     for key, val in CAT_URL.items():
-        if key in url_l: return val
+        if key in url_l:
+            return val
     for w in CAT_TITLE_ACCESSOIRES:
-        if w in title_l: return "Accessoires"
+        if w in title_l:
+            return "Accessoires"
     for w in CAT_TITLE_ENFANT:
-        if w in title_l: return "Enfant"
+        if w in title_l:
+            return "Enfant"
     for w in CAT_TITLE_HOMME:
-        if w in title_l: return "Homme"
+        if w in title_l:
+            return "Homme"
     for w in CAT_TITLE_FEMME:
-        if w in title_l: return "Femme"
+        if w in title_l:
+            return "Femme"
     return "Femme"
 
 def to_float(val):
-    if val is None: return None
+    if val is None:
+        return None
     if isinstance(val, (int, float)):
         f = float(val)
         return f if f > 0 else None
@@ -131,10 +137,6 @@ def format_item(raw):
     if isinstance(photo, dict):
         img = photo.get("url") or photo.get("full_size_url") or ""
 
-    if price == 0.0:
-        price_fields = {k: v for k, v in raw.items() if "price" in k.lower()}
-        print(f"    [DEBUG PRIX] '{title[:35]}' | champs: {price_fields}")
-
     return {
         "id":       str(raw.get("id", int(time.time()))),
         "titre":    title,
@@ -149,8 +151,8 @@ def format_item(raw):
 
 def get_session():
     """
-    Utilise SeleniumBase (vrai Chrome headless) pour visiter le profil
-    et recuperer les vrais cookies — contourne DataDome et le TLS fingerprinting.
+    Utilise SeleniumBase (vrai Chrome headless) pour obtenir
+    les vrais cookies Vinted.
     """
     try:
         from seleniumbase import SB
@@ -164,13 +166,14 @@ def get_session():
         print(f"  Cookies obtenus : {list(cookies.keys())}")
 
         if "access_token_web" not in cookies:
-            print("  [WARN] access_token_web absent — Vinted a peut-etre bloque la session")
+            print("  [WARN] access_token_web absent")
 
         s = requests.Session()
         s.headers.update(HEADERS)
         s.headers.update({"Referer": f"{BASE_URL}/", "Origin": BASE_URL})
+        domain = BASE_URL.replace("https://", "")
         for name, value in cookies.items():
-            s.cookies.set(name, value, domain=BASE_URL.replace("https://", ""))
+            s.cookies.set(name, value, domain=domain)
         return s
 
     except ImportError:
@@ -220,31 +223,29 @@ def run():
         send_github_alert(msg)
         sys.exit(1)
 
-    API_URL = f"{BASE_URL}/api/v2/catalog/items"
+    API_URL = f"{BASE_URL}/api/v2/users/{VINTED_USER_ID}/items"
+    print(f"  Endpoint : {API_URL}")
 
-    r0 = session.get(API_URL, params={"user_id": VINTED_USER_ID, "page": 1, "per_page": 1}, timeout=20)
+    r0 = session.get(API_URL, params={"page": 1, "per_page": 20}, timeout=20)
     r0.raise_for_status()
-    pagination  = r0.json().get("pagination", {})
-    total_items = pagination.get("total_entries", 0)
-    total_pages = pagination.get("total_pages", 1)
-    MAX_ITEMS   = total_items
-    print(f"  Articles declares sur le profil : {total_items} ({total_pages} pages)")
+    data0       = r0.json()
+    total_items = data0.get("pagination", {}).get("total_entries", 0) or len(data0.get("items", []))
+    total_pages = data0.get("pagination", {}).get("total_pages", 1)
+    print(f"  Articles declares : {total_items} ({total_pages} pages)")
 
     articles, seen = [], set()
 
+    for raw in data0.get("items", []):
+        art = format_item(raw)
+        if art["id"] not in seen:
+            seen.add(art["id"])
+            articles.append(art)
+    print(f"  Page 1/{total_pages} -> {len(data0.get('items', []))} items | Cumul: {len(articles)}/{total_items}")
+
     try:
-        page = 1
-        while len(articles) < MAX_ITEMS:
-            r = session.get(
-                API_URL,
-                params={
-                    "user_id":  VINTED_USER_ID,
-                    "order":    "newest_first",
-                    "page":     page,
-                    "per_page": 20,
-                },
-                timeout=20,
-            )
+        page = 2
+        while page <= total_pages:
+            r = session.get(API_URL, params={"page": page, "per_page": 20}, timeout=20)
 
             if r.status_code == 401:
                 print("  [WARN] 401 - re-auth via Chrome...")
