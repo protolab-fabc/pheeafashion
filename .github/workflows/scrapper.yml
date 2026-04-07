@@ -22,7 +22,10 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install requests
+        run: pip install requests seleniumbase
+
+      - name: Install ChromeDriver
+        run: seleniumbase install chromedriver
 
       - name: Run scrapper
         env:
