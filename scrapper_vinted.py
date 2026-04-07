@@ -19,7 +19,6 @@ DEFAULT_PROFIL_URL = "https://www.vinted.be/member/3138419705-pheeafashion"
 # ──────────────────────────────────────────────
 
 OUTPUT_FILE = "data.json"
-MAX_ITEMS   = 200
 DELAY       = 1.5
 
 HEADERS = {
@@ -152,8 +151,7 @@ def get_session():
     s = requests.Session()
     s.headers.update(HEADERS)
     s.headers.update({"Referer": f"{BASE_URL}/", "Origin": BASE_URL})
-    # ✅ Visite le profil pour générer access_token_web et les cookies de session
-    print(f"  Visite profil : {PROFIL_URL}")
+    print(f"  Visite profil pour cookies : {PROFIL_URL}")
     r = s.get(PROFIL_URL, timeout=15)
     r.raise_for_status()
     print(f"  Statut: {r.status_code} | Cookies: {list(s.cookies.keys())}")
@@ -204,8 +202,16 @@ def run():
         send_github_alert(msg)
         sys.exit(1)
 
-    # ✅ Endpoint confirmé fonctionnel
     API_URL = f"{BASE_URL}/api/v2/catalog/items"
+
+    # ── Récupère d'abord le nombre total d'articles ──────────────────────────
+    r0 = session.get(API_URL, params={"user_id": VINTED_USER_ID, "page": 1, "per_page": 1}, timeout=20)
+    r0.raise_for_status()
+    pagination  = r0.json().get("pagination", {})
+    total_items = pagination.get("total_entries", 0)
+    total_pages = pagination.get("total_pages", 1)
+    MAX_ITEMS   = total_items  # on scrape TOUT ce que Vinted déclare
+    print(f"  Articles declares sur le profil : {total_items} ({total_pages} pages)")
     print(f"  Endpoint : {API_URL}?user_id={VINTED_USER_ID}")
 
     articles, seen = [], set()
@@ -259,8 +265,7 @@ def run():
                     seen.add(art["id"])
                     articles.append(art)
 
-            total = data.get("pagination", {}).get("total_pages", "?")
-            print(f"  Page {page}/{total} -> {len(items)} items | Cumul: {len(articles)}")
+            print(f"  Page {page}/{total_pages} -> {len(items)} items | Cumul: {len(articles)}/{total_items}")
             page += 1
             time.sleep(DELAY)
 
@@ -277,13 +282,16 @@ def run():
         send_github_alert("0 article recupere")
         sys.exit(1)
 
+    # ── Ecrase complètement data.json — les articles vendus/supprimés
+    #    disparaissent naturellement car on repart de zéro à chaque run
     output = {
         "meta": {
-            "source":     "Vinted",
-            "profil":     PROFIL_URL,
-            "total":      len(articles),
-            "mis_a_jour": datetime.now().strftime("%d/%m/%Y %H:%M"),
-            "statut":     "ok",
+            "source":          "Vinted",
+            "profil":          PROFIL_URL,
+            "total":           len(articles),
+            "total_vinted":    total_items,
+            "mis_a_jour":      datetime.now().strftime("%d/%m/%Y %H:%M"),
+            "statut":          "ok",
         },
         "articles": articles,
     }
@@ -294,7 +302,7 @@ def run():
 
     prix_ok   = sum(1 for a in articles if a["prix"] > 0)
     prix_zero = len(articles) - prix_ok
-    print(f"\n  {len(articles)} articles sauvegardes")
+    print(f"\n  {len(articles)}/{total_items} articles sauvegardes")
     print(f"  Avec prix: {prix_ok} | Sans prix: {prix_zero}")
     print(f"  Mis a jour: {output['meta']['mis_a_jour']}")
 
