@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """
 SCRAPPER VINTED - Profil configurable
-Dependances : pip install cloudscraper
+Dependances : pip install requests
 
 Usage:
-  python scrapper.py
-  python scrapper.py https://www.vinted.be/member/3138419705-pheeafashion
+  python scrapper_vinted.py
+  python scrapper_vinted.py https://www.vinted.be/member/3138419705-pheeafashion
 """
 
 import json, time, os, sys, re
-import cloudscraper
+import requests
 from datetime import datetime
 
 # ──────────────────────────────────────────────
@@ -22,6 +22,13 @@ OUTPUT_FILE = "data.json"
 MAX_ITEMS   = 200
 DELAY       = 1.5
 
+HEADERS = {
+    "User-Agent":      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0 Safari/537.36",
+    "Accept":          "application/json, text/plain, */*",
+    "Accept-Language": "fr-BE,fr;q=0.9,en;q=0.8",
+    "DNT":             "1",
+}
+
 def parse_profil_url(url):
     match = re.search(r"(https?://[^/]+)/member/(\d+)-([^/?#]+)", url)
     if not match:
@@ -33,8 +40,6 @@ def parse_profil_url(url):
 raw_url = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_PROFIL_URL
 VINTED_USER_ID, VINTED_USERNAME, BASE_URL = parse_profil_url(raw_url)
 PROFIL_URL = f"{BASE_URL}/member/{VINTED_USER_ID}-{VINTED_USERNAME}?tab=closet"
-
-# ─────────────────────────────────────────────────────────────────────────────
 
 CAT_URL = {
     "women": "Femme", "femme": "Femme", "ladies": "Femme",
@@ -144,26 +149,16 @@ def format_item(raw):
     }
 
 def get_session():
-    """
-    cloudscraper imite un vrai navigateur et contourne DataDome/Cloudflare.
-    On visite d'abord la page du profil pour obtenir les cookies de session
-    liés à ce profil précis (et non l'accueil générique).
-    """
-    s = cloudscraper.create_scraper(
-        browser={
-            "browser": "chrome",
-            "platform": "windows",
-            "desktop": True,
-        }
-    )
-    s.headers.update({
-        "Accept-Language": "fr-BE,fr;q=0.9,en;q=0.8",
-        "DNT": "1",
-    })
-    print(f"  Visite de la page profil : {PROFIL_URL}")
-    r = s.get(PROFIL_URL, timeout=20)
+    s = requests.Session()
+    s.headers.update(HEADERS)
+    s.headers.update({"Referer": f"{BASE_URL}/", "Origin": BASE_URL})
+    # ✅ Visite le profil pour générer access_token_web et les cookies de session
+    print(f"  Visite profil : {PROFIL_URL}")
+    r = s.get(PROFIL_URL, timeout=15)
     r.raise_for_status()
     print(f"  Statut: {r.status_code} | Cookies: {list(s.cookies.keys())}")
+    if "access_token_web" not in s.cookies:
+        print("  [WARN] access_token_web absent !")
     return s
 
 def send_github_alert(reason):
@@ -200,7 +195,7 @@ def run():
     print(f"  {datetime.now().strftime('%d/%m/%Y %H:%M')}")
     print("=" * 52)
 
-    print("  Initialisation session via cloudscraper...")
+    print("  Initialisation session...")
     try:
         session = get_session()
     except Exception as e:
@@ -209,9 +204,9 @@ def run():
         send_github_alert(msg)
         sys.exit(1)
 
-    # ✅ Endpoint correct avec session cloudscraper authentifiée
-    API_URL = f"{BASE_URL}/api/v2/users/{VINTED_USER_ID}/items"
-    print(f"  Endpoint : {API_URL}")
+    # ✅ Endpoint confirmé fonctionnel
+    API_URL = f"{BASE_URL}/api/v2/catalog/items"
+    print(f"  Endpoint : {API_URL}?user_id={VINTED_USER_ID}")
 
     articles, seen = [], set()
 
@@ -220,7 +215,12 @@ def run():
         while len(articles) < MAX_ITEMS:
             r = session.get(
                 API_URL,
-                params={"page": page, "per_page": 20},
+                params={
+                    "user_id":  VINTED_USER_ID,
+                    "order":    "newest_first",
+                    "page":     page,
+                    "per_page": 20,
+                },
                 timeout=20,
             )
 
@@ -246,7 +246,6 @@ def run():
                 data = r.json()
             except Exception as e:
                 print(f"  [WARN] JSON invalide page {page}: {e}")
-                print(f"  Reponse brute: {r.text[:300]}")
                 break
 
             items = data.get("items", [])
@@ -260,8 +259,8 @@ def run():
                     seen.add(art["id"])
                     articles.append(art)
 
-            total_pages = data.get("pagination", {}).get("total_pages", "?")
-            print(f"  Page {page}/{total_pages} -> {len(items)} items | Cumul: {len(articles)}")
+            total = data.get("pagination", {}).get("total_pages", "?")
+            print(f"  Page {page}/{total} -> {len(items)} items | Cumul: {len(articles)}")
             page += 1
             time.sleep(DELAY)
 
