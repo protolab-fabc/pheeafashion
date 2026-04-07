@@ -51,19 +51,16 @@ CAT_TITLE_ACCESSOIRES = [
     "portefeuille", "sac a main", "tote bag", "backpack", "sac dos",
     "gants", "mitaines", "casquette",
 ]
-
 CAT_TITLE_ENFANT = [
     "enfant", "bebe", "baby", "garcon", "fille", " ans", "naissance",
     "maternelle", "junior", "kid", "kids", "creche", "pyjama enfant",
     "body bebe", "combinaison bebe", "gigoteuse",
 ]
-
 CAT_TITLE_HOMME = [
     "costume", "blazer homme", "polo homme", "cravate", "chemise homme",
     "pull homme", "sweat homme", "veste homme", "manteau homme", "jean homme",
     "pantalon homme", "short homme", "bermuda", "jogging homme",
 ]
-
 CAT_TITLE_FEMME = [
     "robe", "jupe", "blouse", "tunique", "legging", "soutien", "brassiere",
     "bustier", "crop top", "cardigan femme", "pull femme", "manteau femme",
@@ -143,27 +140,23 @@ def format_item(raw):
     }
 
 def get_session():
-    try:
-        from seleniumbase import SB
-        print(f"  Lancement Chrome headless -> {PROFIL_URL}")
-        with SB(uc=True, headless=True) as sb:
-            sb.open(PROFIL_URL)
-            sb.sleep(4)
-            raw_cookies = sb.get_cookies()
-        cookies = {c["name"]: c["value"] for c in raw_cookies}
-        print(f"  Cookies obtenus : {list(cookies.keys())}")
-        if "access_token_web" not in cookies:
-            print("  [WARN] access_token_web absent")
-        s = requests.Session()
-        s.headers.update(HEADERS)
-        s.headers.update({"Referer": f"{BASE_URL}/", "Origin": BASE_URL})
-        domain = BASE_URL.replace("https://", "")
-        for name, value in cookies.items():
-            s.cookies.set(name, value, domain=domain)
-        return s
-    except ImportError:
-        print("[ERREUR] seleniumbase non installe.")
-        sys.exit(1)
+    from seleniumbase import SB
+    print(f"  Lancement Chrome headless -> {PROFIL_URL}")
+    with SB(uc=True, headless=True) as sb:
+        sb.open(PROFIL_URL)
+        sb.sleep(4)
+        raw_cookies = sb.get_cookies()
+    cookies = {c["name"]: c["value"] for c in raw_cookies}
+    print(f"  Cookies obtenus : {list(cookies.keys())}")
+    if "access_token_web" not in cookies:
+        print("  [WARN] access_token_web absent")
+    s = requests.Session()
+    s.headers.update(HEADERS)
+    s.headers.update({"Referer": f"{BASE_URL}/", "Origin": BASE_URL})
+    domain = BASE_URL.replace("https://", "")
+    for name, value in cookies.items():
+        s.cookies.set(name, value, domain=domain)
+    return s
 
 def send_github_alert(reason):
     import urllib.request as _req
