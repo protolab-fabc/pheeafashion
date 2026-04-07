@@ -22,7 +22,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install cloudscraper
+        run: pip install requests
 
       - name: Run scrapper
         env:
