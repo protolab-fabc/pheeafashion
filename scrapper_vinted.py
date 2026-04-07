@@ -9,7 +9,6 @@ import requests
 from datetime import datetime
 
 DEFAULT_PROFIL_URL = "https://www.vinted.be/member/3138419705-pheeafashion"
-
 OUTPUT_FILE = "data.json"
 DELAY = 1.5
 
@@ -94,7 +93,7 @@ def to_float(val):
         return f if f > 0 else None
     if isinstance(val, str):
         try:
-            f = float(val.replace(",", ".").replace(" ", "").replace("\\u202f", ""))
+            f = float(val.replace(",", ".").replace(" ", ""))
             return f if f > 0 else None
         except Exception:
             return None
@@ -166,7 +165,7 @@ def send_github_alert(reason):
     try:
         payload = json.dumps({
             "title":  f"Scrapper en echec - {datetime.now().strftime('%d/%m/%Y')}",
-            "body":   f"## Scrapper en echec\\n\\n**Raison :** {reason}\\n**Date :** {datetime.now().strftime('%d/%m/%Y %H:%M')}",
+            "body":   f"## Scrapper en echec\n\n**Raison :** {reason}\n**Date :** {datetime.now().strftime('%d/%m/%Y %H:%M')}",
             "labels": ["scrapper-error"],
         }).encode()
         req = _req.Request(
@@ -200,6 +199,7 @@ def run():
         send_github_alert(msg)
         sys.exit(1)
 
+    # ENDPOINT DIRECT VENDEUR — retourne uniquement les articles de ce profil
     API_URL = f"{BASE_URL}/api/v2/users/{VINTED_USER_ID}/items"
     print(f"  Endpoint : {API_URL}")
 
@@ -208,14 +208,7 @@ def run():
 
     try:
         while True:
-            r = session.get(
-                API_URL,
-                params={
-                    "page":     page,
-                    "per_page": 20,
-                },
-                timeout=20,
-            )
+            r = session.get(API_URL, params={"page": page, "per_page": 20}, timeout=20)
 
             if r.status_code == 401:
                 print("  [WARN] 401 - re-auth...")
@@ -235,32 +228,23 @@ def run():
 
             r.raise_for_status()
 
-            if page == 1:
-                try:
-                    raw_data = r.json()
-                    print(f"  [DEBUG] cles racine reponse : {list(raw_data.keys())}")
-                    items_raw = raw_data.get("items", raw_data.get("closet_items", []))
-                    if items_raw:
-                        print(f"  [DEBUG] cles 1er item : {list(items_raw[0].keys())[:20]}")
-                    else:
-                        print(f"  [DEBUG] reponse brute (200 premiers chars) : {str(raw_data)[:200]}")
-                    data = raw_data
-                except Exception as e:
-                    print(f"  [DEBUG] JSON invalide: {e} | brut: {r.text[:200]}")
-                    break
-            else:
-                try:
-                    data = r.json()
-                except Exception as e:
-                    print(f"  [WARN] JSON invalide page {page}: {e}")
-                    break
+            try:
+                data = r.json()
+            except Exception as e:
+                print(f"  [WARN] JSON invalide page {page}: {e} | brut: {r.text[:200]}")
+                break
 
-            items = (
-                data.get("items")
-                or data.get("closet_items")
-                or data.get("user_items")
-                or []
-            )
+            # DEBUG page 1 uniquement
+            if page == 1:
+                print(f"  [DEBUG] cles racine : {list(data.keys())}")
+                for key in ("items", "closet_items", "user_items"):
+                    if data.get(key):
+                        print(f"  [DEBUG] cles 1er item ({key}) : {list(data[key][0].keys())[:20]}")
+                        break
+                else:
+                    print(f"  [DEBUG] reponse : {str(data)[:300]}")
+
+            items = data.get("items") or data.get("closet_items") or data.get("user_items") or []
 
             if not items:
                 print(f"  Page {page} -> 0 items, fin")
@@ -293,7 +277,7 @@ def run():
             print(f"  [WARN] Arret apres erreur: {e}")
 
     if len(articles) == 0:
-        send_github_alert("0 article recupere - voir logs DEBUG pour structure API")
+        send_github_alert("0 article recupere - voir logs DEBUG")
         sys.exit(1)
 
     output = {
