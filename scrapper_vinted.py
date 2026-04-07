@@ -9,7 +9,6 @@ import requests
 from datetime import datetime
 
 DEFAULT_PROFIL_URL = "https://www.vinted.be/member/3138419705-pheeafashion"
-
 OUTPUT_FILE = "data.json"
 DELAY = 1.5
 
@@ -94,7 +93,7 @@ def to_float(val):
         return f if f > 0 else None
     if isinstance(val, str):
         try:
-            f = float(val.replace(",", ".").replace(" ", "").replace("\u202f", ""))
+            f = float(val.replace(",", ".").replace(" ", ""))
             return f if f > 0 else None
         except Exception:
             return None
@@ -147,8 +146,6 @@ def get_session():
         raw_cookies = sb.get_cookies()
     cookies = {c["name"]: c["value"] for c in raw_cookies}
     print(f"  Cookies obtenus : {list(cookies.keys())}")
-    if "access_token_web" not in cookies:
-        print("  [WARN] access_token_web absent")
     s = requests.Session()
     s.headers.update(HEADERS)
     s.headers.update({"Referer": f"{BASE_URL}/", "Origin": BASE_URL})
@@ -184,6 +181,31 @@ def send_github_alert(reason):
     except Exception as e:
         print(f"  Erreur alerte: {e}")
 
+def probe_endpoint(session):
+    """Teste les endpoints Vinted et retourne (url, is_catalog)."""
+    candidates = [
+        (f"{BASE_URL}/api/v2/users/{VINTED_USER_ID}/items", False),
+        (f"{BASE_URL}/api/v2/catalog/items", True),
+        (f"{BASE_URL}/api/v2/users/{VINTED_USER_ID}/closet", False),
+    ]
+    for url, is_catalog in candidates:
+        try:
+            params = {"page": 1, "per_page": 1}
+            if is_catalog:
+                params["user_id"] = VINTED_USER_ID
+            r = session.get(url, params=params, timeout=15)
+            short = url.replace(BASE_URL, "")
+            print(f"  [PROBE] {short} -> {r.status_code}")
+            if r.status_code == 200:
+                data = r.json()
+                items = data.get("items") or data.get("closet_items") or data.get("user_items") or []
+                print(f"  [PROBE] cles: {list(data.keys())} | items page1: {len(items)}")
+                return url, is_catalog
+        except Exception as e:
+            print(f"  [PROBE] {url} -> ERREUR {e}")
+        time.sleep(0.5)
+    return None, False
+
 def run():
     print("=" * 52)
     print(f"  SCRAPPER VINTED - {VINTED_USERNAME}")
@@ -200,43 +222,25 @@ def run():
         send_github_alert(msg)
         sys.exit(1)
 
-    # Teste les endpoints connus dans l'ordre jusqu'a trouver celui qui repond
-    ENDPOINTS = [
-        f"{BASE_URL}/api/v2/users/{VINTED_USER_ID}/items",
-        f"{BASE_URL}/api/v2/catalog/items",
-        f"{BASE_URL}/api/v2/users/{VINTED_USER_ID}/closet",
-    ]
-    API_URL = None
-    IS_CATALOG = False
-    for candidate in ENDPOINTS:
-        try:
-            test = session.get(candidate, params={"page": 1, "per_page": 1, "user_id": VINTED_USER_ID} if "catalog" in candidate else {"page": 1, "per_page": 1}, timeout=15)
-            print(f"  [PROBE] {candidate.split(BASE_URL)[1]} -> {test.status_code}")
-            if test.status_code == 200:
-                pd = test.json()
-                pi = pd.get("items") or pd.get("closet_items") or pd.get("user_items") or []
-                print(f"  [PROBE] cles: {list(pd.keys())} | items: {len(pi)}")
-                API_URL = candidate
-                IS_CATALOG = "catalog" in candidate
-                break
-            time.sleep(0.5)
-        except Exception as e:
-            print(f"  [PROBE] {candidate} -> ERREUR {e}")
+    print("  Recherche du meilleur endpoint...")
+    API_URL, IS_CATALOG = probe_endpoint(session)
     if not API_URL:
-        msg = "Aucun endpoint Vinted ne repond"
+        msg = "Aucun endpoint Vinted ne repond (tous 404/erreur)"
         print(f"[ERREUR] {msg}")
         send_github_alert(msg)
         sys.exit(1)
     print(f"  Endpoint retenu : {API_URL}")
+
     articles, seen = [], set()
     page = 1
+
     try:
         while True:
-            params = {'page': page, 'per_page': 20}
+            params = {"page": page, "per_page": 20}
             if IS_CATALOG:
-                params['user_id'] = VINTED_USER_ID
+                params["user_id"] = VINTED_USER_ID
+
             r = session.get(API_URL, params=params, timeout=20)
-            )
 
             if r.status_code == 401:
                 print("  [WARN] 401 - re-auth...")
@@ -256,34 +260,13 @@ def run():
 
             r.raise_for_status()
 
-            # DEBUG page 1 : structure brute de la reponse
-            if page == 1:
-                try:
-                    raw_data = r.json()
-                    print(f"  [DEBUG] cles racine reponse : {list(raw_data.keys())}")
-                    items_raw = raw_data.get("items", raw_data.get("closet_items", []))
-                    if items_raw:
-                        print(f"  [DEBUG] cles 1er item : {list(items_raw[0].keys())[:20]}")
-                    else:
-                        print(f"  [DEBUG] reponse brute (200 premiers chars) : {str(raw_data)[:200]}")
-                    data = raw_data
-                except Exception as e:
-                    print(f"  [DEBUG] JSON invalide: {e} | brut: {r.text[:200]}")
-                    break
-            else:
-                try:
-                    data = r.json()
-                except Exception as e:
-                    print(f"  [WARN] JSON invalide page {page}: {e}")
-                    break
+            try:
+                data = r.json()
+            except Exception as e:
+                print(f"  [WARN] JSON invalide page {page}: {e}")
+                break
 
-            # L'endpoint /users/{id}/items peut nommer la liste differemment
-            items = (
-                data.get("items")
-                or data.get("closet_items")
-                or data.get("user_items")
-                or []
-            )
+            items = data.get("items") or data.get("closet_items") or data.get("user_items") or []
 
             if not items:
                 print(f"  Page {page} -> 0 items, fin")
@@ -297,7 +280,6 @@ def run():
 
             print(f"  Page {page} -> {len(items)} items | Cumul: {len(articles)}")
 
-            # Verifie si derniere page via pagination
             pagination = data.get("pagination", {})
             total_pages = pagination.get("total_pages", 1)
             if page >= total_pages:
@@ -317,7 +299,7 @@ def run():
             print(f"  [WARN] Arret apres erreur: {e}")
 
     if len(articles) == 0:
-        send_github_alert("0 article recupere - voir logs DEBUG pour structure API")
+        send_github_alert("0 article recupere - voir logs PROBE")
         sys.exit(1)
 
     output = {
