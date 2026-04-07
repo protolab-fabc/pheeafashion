@@ -94,7 +94,7 @@ def to_float(val):
         return f if f > 0 else None
     if isinstance(val, str):
         try:
-            f = float(val.replace(",", ".").replace(" ", "").replace("\u202f", ""))
+            f = float(val.replace(",", ".").replace(" ", "").replace("\\u202f", ""))
             return f if f > 0 else None
         except Exception:
             return None
@@ -166,7 +166,7 @@ def send_github_alert(reason):
     try:
         payload = json.dumps({
             "title":  f"Scrapper en echec - {datetime.now().strftime('%d/%m/%Y')}",
-            "body":   f"## Scrapper en echec\n\n**Raison :** {reason}\n**Date :** {datetime.now().strftime('%d/%m/%Y %H:%M')}",
+            "body":   f"## Scrapper en echec\\n\\n**Raison :** {reason}\\n**Date :** {datetime.now().strftime('%d/%m/%Y %H:%M')}",
             "labels": ["scrapper-error"],
         }).encode()
         req = _req.Request(
@@ -184,33 +184,6 @@ def send_github_alert(reason):
     except Exception as e:
         print(f"  Erreur alerte: {e}")
 
-# Compteur global pour ne logger qu'une seule fois la structure
-_debug_logged = False
-
-def is_good_seller_item(item):
-    global _debug_logged
-    # DEBUG : affiche la structure du premier item recu pour comprendre les champs vendeur
-    if not _debug_logged:
-        seller_keys = {k: v for k, v in item.items() if any(
-            x in k.lower() for x in ("user", "seller", "member", "owner")
-        )}
-        print(f"  [DEBUG] Champs vendeur du 1er item : {json.dumps(seller_keys, ensure_ascii=False)[:500]}")
-        _debug_logged = True
-
-    # Tous les champs possibles ou peut se cacher l'id vendeur
-    checks = [
-        str(item.get("user_id", "")),
-        str(item.get("seller_id", "")),
-        str(item.get("member_id", "")),
-        str(item.get("owner_id", "")),
-    ]
-    user = item.get("user") or item.get("seller") or item.get("member") or item.get("owner")
-    if isinstance(user, dict):
-        checks.append(str(user.get("id", "")))
-        checks.append(str(user.get("login", "")))
-
-    return str(VINTED_USER_ID) in checks
-
 def run():
     print("=" * 52)
     print(f"  SCRAPPER VINTED - {VINTED_USERNAME}")
@@ -227,20 +200,17 @@ def run():
         send_github_alert(msg)
         sys.exit(1)
 
-    API_URL = f"{BASE_URL}/api/v2/catalog/items"
-    print(f"  Endpoint : {API_URL}?user_id={VINTED_USER_ID}")
+    API_URL = f"{BASE_URL}/api/v2/users/{VINTED_USER_ID}/items"
+    print(f"  Endpoint : {API_URL}")
 
     articles, seen = [], set()
     page = 1
-    empty_streak = 0
 
     try:
         while True:
             r = session.get(
                 API_URL,
                 params={
-                    "user_id":  VINTED_USER_ID,
-                    "order":    "newest_first",
                     "page":     page,
                     "per_page": 20,
                 },
@@ -265,37 +235,50 @@ def run():
 
             r.raise_for_status()
 
-            try:
-                data = r.json()
-            except Exception as e:
-                print(f"  [WARN] JSON invalide page {page}: {e}")
-                break
-
-            items = data.get("items", [])
-
-            # DEBUG page 1 : affiche le nombre total declare et les cles du 1er item
             if page == 1:
-                pagination = data.get("pagination", {})
-                print(f"  [DEBUG] pagination={pagination}")
-                if items:
-                    print(f"  [DEBUG] cles 1er item : {list(items[0].keys())}")
-
-            items_vendeur = [item for item in items if is_good_seller_item(item)]
-
-            if not items_vendeur:
-                empty_streak += 1
-                print(f"  Page {page} -> 0 items vendeur (streak {empty_streak})")
-                if empty_streak >= 2 or not items:
-                    print("  Fin de pagination")
+                try:
+                    raw_data = r.json()
+                    print(f"  [DEBUG] cles racine reponse : {list(raw_data.keys())}")
+                    items_raw = raw_data.get("items", raw_data.get("closet_items", []))
+                    if items_raw:
+                        print(f"  [DEBUG] cles 1er item : {list(items_raw[0].keys())[:20]}")
+                    else:
+                        print(f"  [DEBUG] reponse brute (200 premiers chars) : {str(raw_data)[:200]}")
+                    data = raw_data
+                except Exception as e:
+                    print(f"  [DEBUG] JSON invalide: {e} | brut: {r.text[:200]}")
                     break
             else:
-                empty_streak = 0
-                for raw in items_vendeur:
-                    art = format_item(raw)
-                    if art["id"] not in seen:
-                        seen.add(art["id"])
-                        articles.append(art)
-                print(f"  Page {page} -> {len(items_vendeur)} items vendeur | Cumul: {len(articles)}")
+                try:
+                    data = r.json()
+                except Exception as e:
+                    print(f"  [WARN] JSON invalide page {page}: {e}")
+                    break
+
+            items = (
+                data.get("items")
+                or data.get("closet_items")
+                or data.get("user_items")
+                or []
+            )
+
+            if not items:
+                print(f"  Page {page} -> 0 items, fin")
+                break
+
+            for raw in items:
+                art = format_item(raw)
+                if art["id"] not in seen:
+                    seen.add(art["id"])
+                    articles.append(art)
+
+            print(f"  Page {page} -> {len(items)} items | Cumul: {len(articles)}")
+
+            pagination = data.get("pagination", {})
+            total_pages = pagination.get("total_pages", 1)
+            if page >= total_pages:
+                print(f"  Derniere page ({page}/{total_pages}), fin")
+                break
 
             page += 1
             time.sleep(DELAY)
