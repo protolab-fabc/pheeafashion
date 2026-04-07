@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 SCRAPPER VINTED - Profil configurable
-Dependances : pip install requests
+Dependances : pip install requests seleniumbase
 
 Usage:
   python scrapper_vinted.py
@@ -148,16 +148,34 @@ def format_item(raw):
     }
 
 def get_session():
-    s = requests.Session()
-    s.headers.update(HEADERS)
-    s.headers.update({"Referer": f"{BASE_URL}/", "Origin": BASE_URL})
-    print(f"  Visite profil pour cookies : {PROFIL_URL}")
-    r = s.get(PROFIL_URL, timeout=15)
-    r.raise_for_status()
-    print(f"  Statut: {r.status_code} | Cookies: {list(s.cookies.keys())}")
-    if "access_token_web" not in s.cookies:
-        print("  [WARN] access_token_web absent !")
-    return s
+    """
+    Utilise SeleniumBase (vrai Chrome headless) pour visiter le profil
+    et recuperer les vrais cookies — contourne DataDome et le TLS fingerprinting.
+    """
+    try:
+        from seleniumbase import SB
+        print(f"  Lancement Chrome headless -> {PROFIL_URL}")
+        with SB(uc=True, headless=True) as sb:
+            sb.open(PROFIL_URL)
+            sb.sleep(4)
+            raw_cookies = sb.get_cookies()
+
+        cookies = {c["name"]: c["value"] for c in raw_cookies}
+        print(f"  Cookies obtenus : {list(cookies.keys())}")
+
+        if "access_token_web" not in cookies:
+            print("  [WARN] access_token_web absent — Vinted a peut-etre bloque la session")
+
+        s = requests.Session()
+        s.headers.update(HEADERS)
+        s.headers.update({"Referer": f"{BASE_URL}/", "Origin": BASE_URL})
+        for name, value in cookies.items():
+            s.cookies.set(name, value, domain=BASE_URL.replace("https://", ""))
+        return s
+
+    except ImportError:
+        print("[ERREUR] seleniumbase non installe. Lance : pip install seleniumbase")
+        sys.exit(1)
 
 def send_github_alert(reason):
     import urllib.request as _req
@@ -193,7 +211,7 @@ def run():
     print(f"  {datetime.now().strftime('%d/%m/%Y %H:%M')}")
     print("=" * 52)
 
-    print("  Initialisation session...")
+    print("  Initialisation session via Chrome headless...")
     try:
         session = get_session()
     except Exception as e:
@@ -204,15 +222,13 @@ def run():
 
     API_URL = f"{BASE_URL}/api/v2/catalog/items"
 
-    # ── Récupère d'abord le nombre total d'articles ──────────────────────────
     r0 = session.get(API_URL, params={"user_id": VINTED_USER_ID, "page": 1, "per_page": 1}, timeout=20)
     r0.raise_for_status()
     pagination  = r0.json().get("pagination", {})
     total_items = pagination.get("total_entries", 0)
     total_pages = pagination.get("total_pages", 1)
-    MAX_ITEMS   = total_items  # on scrape TOUT ce que Vinted déclare
+    MAX_ITEMS   = total_items
     print(f"  Articles declares sur le profil : {total_items} ({total_pages} pages)")
-    print(f"  Endpoint : {API_URL}?user_id={VINTED_USER_ID}")
 
     articles, seen = [], set()
 
@@ -231,7 +247,7 @@ def run():
             )
 
             if r.status_code == 401:
-                print("  [WARN] 401 - re-auth...")
+                print("  [WARN] 401 - re-auth via Chrome...")
                 session = get_session()
                 time.sleep(3)
                 continue
@@ -282,16 +298,14 @@ def run():
         send_github_alert("0 article recupere")
         sys.exit(1)
 
-    # ── Ecrase complètement data.json — les articles vendus/supprimés
-    #    disparaissent naturellement car on repart de zéro à chaque run
     output = {
         "meta": {
-            "source":          "Vinted",
-            "profil":          PROFIL_URL,
-            "total":           len(articles),
-            "total_vinted":    total_items,
-            "mis_a_jour":      datetime.now().strftime("%d/%m/%Y %H:%M"),
-            "statut":          "ok",
+            "source":       "Vinted",
+            "profil":       PROFIL_URL,
+            "total":        len(articles),
+            "total_vinted": total_items,
+            "mis_a_jour":   datetime.now().strftime("%d/%m/%Y %H:%M"),
+            "statut":       "ok",
         },
         "articles": articles,
     }
