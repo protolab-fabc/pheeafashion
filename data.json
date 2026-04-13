@@ -3,7 +3,7 @@
     "source": "Vinted",
     "profil": "https://www.vinted.be/member/3138419705-pheeafashion?tab=closet",
     "total": 51,
-    "mis_a_jour": "13/04/2026 11:50",
+    "mis_a_jour": "13/04/2026 12:58",
     "statut": "ok"
   },
   "articles": [
@@ -304,16 +304,16 @@
     {
       "id": "8549711775",
       "titre": "Polo J&Joy marches courtes TS Homme",
-      "prix": 0.0,
+      "prix": 20.0,
       "cat": "Homme",
       "platform": "Vinted",
       "lien": "https://www.vinted.be/items/8549711775",
       "image": "https://images1.vinted.net/t/06_01bef_ZqqcMfsuSib6cXmW2zfZXqDB/310x430/1775146542.webp?s=904fde3d13f5e1f43a9b3ceb20870f84bdea67b3",
-      "taille": "",
-      "marque": "",
-      "etat": "",
-      "matiere": "",
-      "couleur": ""
+      "taille": "S État Neuf avec étiquette Matière Coton",
+      "marque": "J&Joy Menu relatif à la marque Taille S",
+      "etat": "Neuf avec étiquette Matière Coton Couleu",
+      "matiere": "Coton Couleur Jaune Ajouté Il y a une se",
+      "couleur": "Jaune Ajouté Il y a une semaine Neuf ave"
     },
     {
       "id": "8546643118",
@@ -360,30 +360,30 @@
     {
       "id": "8491938652",
       "titre": "Robe avec capuche taille 12ans",
-      "prix": 0.0,
+      "prix": 20.0,
       "cat": "Femme",
       "platform": "Vinted",
       "lien": "https://www.vinted.be/items/8491938652",
       "image": "https://images1.vinted.net/t/06_001d0_sshfTdk1134LxPE9BSuR9cDU/310x430/1774549708.webp?s=fff44fc141f46f383616805311df9d41ad2fe710",
-      "taille": "",
-      "marque": "",
-      "etat": "",
+      "taille": "12 ans / 152 cm État Neuf sans étiquette",
+      "marque": "Billieblush Menu relatif à la marque Tai",
+      "etat": "Neuf sans étiquette Couleur Multicolore",
       "matiere": "",
-      "couleur": ""
+      "couleur": "Multicolore Ajouté Il y a 2 semaines Bel"
     },
     {
       "id": "8491869452",
       "titre": "T-shirt rouge manches courtes TS",
-      "prix": 0.0,
+      "prix": 14.0,
       "cat": "Homme",
       "platform": "Vinted",
       "lien": "https://www.vinted.be/items/8491869452",
       "image": "https://images1.vinted.net/t/01_00264_xRKPnjGvXgUq5MpV47TnLh7T/310x430/1774549202.webp?s=cb4e55ed6d7a1a0f94d8430e71aff0a730067f58",
-      "taille": "",
-      "marque": "",
-      "etat": "",
+      "taille": "S / 36 / 8 État Neuf avec étiquette Coul",
+      "marque": "Carin Wester Menu relatif à la marque Ta",
+      "etat": "Neuf avec étiquette Couleur Rouge Ajouté",
       "matiere": "",
-      "couleur": ""
+      "couleur": "Rouge Ajouté Il y a 2 semaines Très conf"
     },
     {
       "id": "8491844509",
@@ -453,7 +453,7 @@
       "marque": "YAYA Menu relatif à la marque Taille S /",
       "etat": "Neuf avec étiquette Matière Coton, Élast",
       "matiere": "Coton, Élasthanne Couleur Gris Ajouté Il",
-      "couleur": "Gris Ajouté Il y a 4 semaines Neuf avec"
+      "couleur": "Gris Ajouté Il y a 5 semaines Neuf avec"
     },
     {
       "id": "8350633317",
@@ -467,7 +467,7 @@
       "marque": "Jessica Simpson Menu relatif à la marque",
       "etat": "Neuf avec étiquette Couleur Argenté Ajou",
       "matiere": "",
-      "couleur": "Argenté Ajouté Il y a 4 semaines Très or"
+      "couleur": "Argenté Ajouté Il y a 5 semaines Très or"
     },
     {
       "id": "8350591932",
@@ -481,7 +481,7 @@
       "marque": "Orfeo Menu relatif à la marque Taille S",
       "etat": "Neuf avec étiquette Matière Coton Couleu",
       "matiere": "Coton Couleur Noir, Marron Ajouté Il y a",
-      "couleur": "Noir, Marron Ajouté Il y a 4 semaines Tr"
+      "couleur": "Noir, Marron Ajouté Il y a 5 semaines Tr"
     },
     {
       "id": "8350492083",
@@ -495,7 +495,7 @@
       "marque": "Sisters Point Menu relatif à la marque T",
       "etat": "Neuf avec étiquette Couleur Lila, Beige",
       "matiere": "",
-      "couleur": "Lila, Beige Ajouté Il y a 4 semaines Neu"
+      "couleur": "Lila, Beige Ajouté Il y a 5 semaines Neu"
     },
     {
       "id": "8350455244",
@@ -509,7 +509,7 @@
       "marque": "ONLY Menu relatif à la marque Taille M /",
       "etat": "Neuf avec étiquette Couleur Gris Ajouté",
       "matiere": "",
-      "couleur": "Gris Ajouté Il y a 4 semaines Neuve avec"
+      "couleur": "Gris Ajouté Il y a 5 semaines Neuve avec"
     },
     {
       "id": "8350414241",
@@ -523,7 +523,7 @@
       "marque": "Christian Siriano New York Menu relatif",
       "etat": "Neuf avec étiquette Couleur Doré Ajouté",
       "matiere": "",
-      "couleur": "Doré Ajouté Il y a 4 semaines Neuve avec"
+      "couleur": "Doré Ajouté Il y a 5 semaines Neuve avec"
     },
     {
       "id": "8319756582",
