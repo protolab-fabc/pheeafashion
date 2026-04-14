@@ -1,3 +1,37 @@
+/* ── SCROLL-DRIVEN SHIMMER : "pépites" ── */
+(function () {
+  const root   = document.documentElement;
+  let current  = 35;  // Same as CSS fallback offset — évite le saut au premier scroll
+  let target   = 35;
+  let rafId    = null;
+
+  function lerp(a, b, t) { return a + (b - a) * t; }
+
+  function update() {
+    // Lissage : 12% du chemin restant par frame (plus vif)
+    current = lerp(current, target, 0.12);
+
+    // background-position entre 0% (début) et 250% (fin)
+    root.style.setProperty('--pepites-scroll-pos', current.toFixed(2) + '% center');
+
+    // Continuer tant qu'on n'est pas arrivé
+    if (Math.abs(current - target) > 0.05) {
+      rafId = requestAnimationFrame(update);
+    } else {
+      rafId = null;
+    }
+  }
+
+  window.addEventListener('scroll', function () {
+    const scrollY = window.scrollY;
+
+    // 4px de scroll = 1% + offset 35% pour décaler vers la gauche
+    target = Math.min(scrollY / 4 + 35, 100);
+
+    if (!rafId) rafId = requestAnimationFrame(update);
+  }, { passive: true });
+})();
+
 /* ── EMOJIS PAR CATÉGORIE ── */
 const EMOJI_CAT = {
   "Femme":       ["👗","👠","👒","👜","🧣","💄","🥻","👙"],
@@ -149,6 +183,25 @@ function renderGrid() {
     // Afficher taille et marque nettoyées
     const extra = [a.taille, a.marque].filter(Boolean).join(' · ');
 
+    // ── Template TikTok : image + catégorie + CTA uniquement ──
+    if (a.platform === 'TikTok') {
+      return `
+      <a class="card" href="${a.lien}" target="_blank" style="animation-delay:${i*0.04}s">
+        <div class="card-img-placeholder">
+          ${imgHtml}
+          <span class="platform-dot" style="background:${platformColors[a.platform]}"></span>
+          <span class="platform-pill">${a.platform}</span>
+        </div>
+        <div class="card-body" style="padding:0.65rem 1.1rem 0.8rem">
+          <div class="card-meta" style="margin-top:0;justify-content:center">
+            <span class="card-cat">${a.cat}</span>
+          </div>
+          <span class="card-cta">Voir la vidéo</span>
+        </div>
+      </a>`;
+    }
+
+    // ── Template standard (Vinted + autres) ──────────────────
     return `
     <a class="card" href="${a.lien}" target="_blank" style="animation-delay:${i*0.04}s">
       <div class="card-img-placeholder">
@@ -160,7 +213,7 @@ function renderGrid() {
         <div class="card-title">${a.titre}</div>
         ${extra ? `<div class="card-extra">${extra}</div>` : ''}
         <div class="card-meta">
-          <span class="card-price">${a.prix > 0 ? a.prix + ' €' : 'Gratuit'}</span>
+          <span class="card-price">${a.prix > 0 ? a.prix + ' €' : ''}</span>
           <span class="card-cat">${a.cat}</span>
         </div>
         <span class="card-cta">Voir l'annonce</span>
@@ -168,6 +221,7 @@ function renderGrid() {
     </a>`;
   }).join('');
 }
+
 
 /* ── ÉCOUTEURS DE FILTRES CATÉGORIE ── */
 document.querySelectorAll('[data-cat]').forEach(btn => {
