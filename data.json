@@ -1,9 +1,15 @@
 {
   "meta": {
-    "source": "Vinted",
-    "profil": "https://www.vinted.be/member/3138419705-pheeafashion?tab=closet",
+    "sources": [
+      "Vinted",
+      "TikTok"
+    ],
+    "profil_vinted": "https://www.vinted.be/member/3138419705-pheeafashion?tab=closet",
+    "profil_tiktok": "https://www.tiktok.com/@alimatou.gnanou",
     "total": 51,
-    "mis_a_jour": "13/04/2026 12:58",
+    "vinted": 51,
+    "tiktok": 0,
+    "mis_a_jour": "14/04/2026 16:53",
     "statut": "ok"
   },
   "articles": [
@@ -18,8 +24,8 @@
       "taille": "XL / 42 / 14 État Neuf avec étiquette Ma",
       "marque": "Street One Menu relatif à la marque Tail",
       "etat": "Neuf avec étiquette Matière Viscose Coul",
-      "matiere": "Viscose Couleur Rouge Ajouté Il y a 5 jo",
-      "couleur": "Rouge Ajouté Il y a 5 jours Neuve avec é"
+      "matiere": "Viscose Couleur Rouge Ajouté Il y a 6 jo",
+      "couleur": "Rouge Ajouté Il y a 6 jours Neuve avec é"
     },
     {
       "id": "8593356579",
@@ -32,8 +38,8 @@
       "taille": "S / 36 / 8 État Neuf sans étiquette Mati",
       "marque": "EIGHT PARIS Menu relatif à la marque Tai",
       "etat": "Neuf sans étiquette Matière Coton Couleu",
-      "matiere": "Coton Couleur Noir Ajouté Il y a 5 jours",
-      "couleur": "Noir Ajouté Il y a 5 jours Neuve sans ét"
+      "matiere": "Coton Couleur Noir Ajouté Il y a 6 jours",
+      "couleur": "Noir Ajouté Il y a 6 jours Neuve sans ét"
     },
     {
       "id": "8593302205",
@@ -46,8 +52,8 @@
       "taille": "M / 38 / 10 État Neuf avec étiquette Mat",
       "marque": "Aware Menu relatif à la marque Taille M",
       "etat": "Neuf avec étiquette Matière Coton Couleu",
-      "matiere": "Coton Couleur Noir Ajouté Il y a 5 jours",
-      "couleur": "Noir Ajouté Il y a 5 jours Neuve avec  é"
+      "matiere": "Coton Couleur Noir Ajouté Il y a 6 jours",
+      "couleur": "Noir Ajouté Il y a 6 jours Neuve avec  é"
     },
     {
       "id": "8593267098",
@@ -61,7 +67,7 @@
       "marque": "Street One Menu relatif à la marque Tail",
       "etat": "Neuf avec étiquette Couleur Multicolore",
       "matiere": "",
-      "couleur": "Multicolore Ajouté Il y a 5 jours Neuve"
+      "couleur": "Multicolore Ajouté Il y a 6 jours Neuve"
     },
     {
       "id": "8593120554",
@@ -74,8 +80,8 @@
       "taille": "M / 38 / 10 État Neuf avec étiquette Mat",
       "marque": "Vila Menu relatif à la marque Taille M /",
       "etat": "Neuf avec étiquette Matière Polyester Co",
-      "matiere": "Polyester Couleur Violet Ajouté Il y a 5",
-      "couleur": "Violet Ajouté Il y a 5 jours Robe longue"
+      "matiere": "Polyester Couleur Violet Ajouté Il y a 6",
+      "couleur": "Violet Ajouté Il y a 6 jours Robe longue"
     },
     {
       "id": "8592868027",
@@ -88,8 +94,8 @@
       "taille": "S / 36 / 8 État Neuf avec étiquette Mati",
       "marque": "JDY Menu relatif à la marque Taille S /",
       "etat": "Neuf avec étiquette Matière Dentelle Cou",
-      "matiere": "Dentelle Couleur Marron Ajouté Il y a 5",
-      "couleur": "Marron Ajouté Il y a 5 jours Très belle"
+      "matiere": "Dentelle Couleur Marron Ajouté Il y a 6",
+      "couleur": "Marron Ajouté Il y a 6 jours Très belle"
     },
     {
       "id": "8592503480",
@@ -102,8 +108,8 @@
       "taille": "M / 38 / 10 État Neuf avec étiquette Mat",
       "marque": "Kaos Menu relatif à la marque Taille M /",
       "etat": "Neuf avec étiquette Matière Coton Couleu",
-      "matiere": "Coton Couleur Lila Ajouté Il y a 5 jours",
-      "couleur": "Lila Ajouté Il y a 5 jours Neuve avec ét"
+      "matiere": "Coton Couleur Lila Ajouté Il y a 6 jours",
+      "couleur": "Lila Ajouté Il y a 6 jours Neuve avec ét"
     },
     {
       "id": "8592364425",
@@ -117,7 +123,7 @@
       "marque": "ONLY Menu relatif à la marque Taille M /",
       "etat": "Neuf avec étiquette Matière Polyester Co",
       "matiere": "Polyester Couleur Noir, Rouge Ajouté Il",
-      "couleur": "Noir, Rouge Ajouté Il y a 5 jours Neuve"
+      "couleur": "Noir, Rouge Ajouté Il y a 6 jours Neuve"
     },
     {
       "id": "8592266373",
@@ -131,7 +137,7 @@
       "marque": "Poti Pati Menu relatif à la marque Taill",
       "etat": "Neuf avec étiquette Couleur Moutarde Ajo",
       "matiere": "",
-      "couleur": "Moutarde Ajouté Il y a 5 jours Sandales"
+      "couleur": "Moutarde Ajouté Il y a 6 jours Sandales"
     },
     {
       "id": "8557966215",
@@ -438,8 +444,8 @@
       "taille": "",
       "marque": "Danecraft Menu relatif à la marque État",
       "etat": "Neuf avec étiquette Matière Argent Coule",
-      "matiere": "Argent Couleur Argenté Ajouté Il y a 4 s",
-      "couleur": "Argenté Ajouté Il y a 4 semaines Neuf da"
+      "matiere": "Argent Couleur Argenté Ajouté Il y a 5 s",
+      "couleur": "Argenté Ajouté Il y a 5 semaines Neuf da"
     },
     {
       "id": "8350703625",
@@ -592,8 +598,8 @@
       "taille": "S / 36 / 8 État Neuf avec étiquette Mati",
       "marque": "Gaudi Menu relatif à la marque Taille S",
       "etat": "Neuf avec étiquette Matière Coton Couleu",
-      "matiere": "Coton Couleur Bleu Ajouté Il y a 5 semai",
-      "couleur": "Bleu Ajouté Il y a 5 semaines Jeans léop"
+      "matiere": "Coton Couleur Bleu Ajouté Il y a 6 semai",
+      "couleur": "Bleu Ajouté Il y a 6 semaines Jeans léop"
     },
     {
       "id": "8301881169",
@@ -607,7 +613,7 @@
       "marque": "Morgan Menu relatif à la marque Taille X",
       "etat": "Neuf avec étiquette Couleur Noir Ajouté",
       "matiere": "",
-      "couleur": "Noir Ajouté Il y a 5 semaines Petite rob"
+      "couleur": "Noir Ajouté Il y a 6 semaines Petite rob"
     },
     {
       "id": "8301832051",
@@ -621,7 +627,7 @@
       "marque": "Garcia Menu relatif à la marque Taille S",
       "etat": "Neuf avec étiquette Couleur Beige Ajouté",
       "matiere": "",
-      "couleur": "Beige Ajouté Il y a 5 semaines Super jol"
+      "couleur": "Beige Ajouté Il y a 6 semaines Super jol"
     },
     {
       "id": "8289919919",
@@ -682,16 +688,16 @@
     {
       "id": "8276223320",
       "titre": "Trench léopard taille L",
-      "prix": 21.0,
+      "prix": 0.0,
       "cat": "Femme",
       "platform": "Vinted",
       "lien": "https://www.vinted.be/items/8276223320",
       "image": "https://images1.vinted.net/t/05_00c4b_s9ZrBmSkarKmiRotQ8Pkd2NN/310x430/1772230383.webp?s=6d1b58e5f37af33b9412d7dfd094643862a261ef",
-      "taille": "L / 40 / 12 État Neuf avec étiquette Cou",
-      "marque": "Pieces Menu relatif à la marque Taille L",
-      "etat": "Neuf avec étiquette Couleur Marron Ajout",
+      "taille": "",
+      "marque": "",
+      "etat": "",
       "matiere": "",
-      "couleur": "Marron Ajouté Il y a 6 semaines Neuf ave"
+      "couleur": ""
     },
     {
       "id": "8276198759",
