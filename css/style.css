@@ -130,7 +130,15 @@ nav a {
   opacity: 0.6;
   transition: opacity 0.2s, color 0.2s;
 }
-nav a:hover { opacity: 1; color: var(--or); }
+nav a:hover {
+  opacity: 1;
+  background: linear-gradient(100deg, #C8860A 10%, #E9A020 30%, #FFF0B0 50%, #F0C56A 65%, #C8860A 85%, #E9A020 80%, #C8860A 60%);
+  background-size: 250% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer-gold 20s linear infinite;
+}
 
 .nav-divider {
   width: 1px;
@@ -194,22 +202,24 @@ nav a:hover { opacity: 1; color: var(--or); }
 }
 .hero-title em {
   font-style: italic;
-  /* Gradient animé : sweep de lumière dorée */
+  /* Gradient or : position pilotée par le scroll via JS */
   background: linear-gradient(
-    100deg,
-    #C8860A 10%,
+    to right,
+    #C8860A 0%,
+    #B87408 10%,
     #E9A020 30%,
+    #FFFAE0 48%,
     #FFF0B0 50%,
-    #F0C56A 65%,
-    #C8860A 85%,
-    #E9A020 80%,
-    #C8860A 60%
+    #FFFAE0 52%,
+    #E9A020 70%,
+    #B87408 90%,
+    #C8860A 100%
   );
-  background-size: 250% auto;
+  background-size: 200% auto;
+  background-position: var(--pepites-scroll-pos, 35% center);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  animation: shimmer-gold 20s linear infinite;
   filter: drop-shadow(0 0 6px rgba(233,160,32,0.35));
 }
 
@@ -246,7 +256,20 @@ nav a:hover { opacity: 1; color: var(--or); }
 .orn-line.r { background: linear-gradient(to left, transparent, var(--beige-soft)); }
 .orn-diamond {
   width: 7px; height: 7px;
-  border: 1.5px solid var(--or);
+  background: linear-gradient(
+    to right,
+    #C8860A 0%,
+    #B87408 10%,
+    #E9A020 30%,
+    #FFFAE0 48%,
+    #FFF0B0 50%,
+    #FFFAE0 52%,
+    #E9A020 70%,
+    #B87408 90%,
+    #C8860A 100%
+  );
+  background-size: 200% auto;
+  background-position: var(--pepites-scroll-pos, 35% center);
   transform: rotate(45deg);
 }
 
@@ -259,12 +282,13 @@ nav a:hover { opacity: 1; color: var(--or); }
 }
 
 .stat {
-  background: rgba(255,255,255,0.55);
-  border: 1px solid var(--beige-soft);
+  background: rgba(255,252,245,0.96);
+  border: 1px solid rgba(200,134,10,0.4);
   border-radius: 4px;
   padding: 1rem 2rem;
   text-align: center;
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 24px rgba(44,26,14,0.13), inset 0 1px 0 rgba(255,255,255,0.95);
 }
 .stat-n {
   display: block;
@@ -272,23 +296,7 @@ nav a:hover { opacity: 1; color: var(--or); }
   font-size: 2.2rem;
   font-weight: 700;
   line-height: 1;
-  /* Effet brillant */
-  background: linear-gradient(
-    100deg,
-    #C8860A 10%,
-    #E9A020 30%,
-    #FFF0B0 50%,
-    #F0C56A 65%,
-    #C8860A 85%,
-    #E9A020 80%,
-    #C8860A 60%
-  );
-  background-size: 160% auto;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: shimmer-gold-stat 20s linear infinite;
-  filter: drop-shadow(0 0 6px rgba(233,160,32,0.3));
+  color: var(--or);
 }
 
 /* ── LOGO SHIMMER ── */
@@ -300,6 +308,12 @@ nav a:hover { opacity: 1; color: var(--or); }
   0%   { background-position: 0%   center; }
   100% { background-position: 160% center; }
 }
+
+@keyframes shimmer-gold-border {
+  0%   { background-position: 0%   center; }
+  100% { background-position: 250% center; }
+}
+
 .stat-l {
   display: block;
   font-size: 0.62rem;
@@ -432,8 +446,13 @@ nav a:hover { opacity: 1; color: var(--or); }
 .count-badge {
   font-size: 0.7rem;
   letter-spacing: 0.1em;
-  color: var(--or);
-  background: rgba(200,134,10,0.08);
+  background: linear-gradient(100deg, #C8860A 10%, #E9A020 30%, #FFF0B0 50%, #F0C56A 65%, #C8860A 85%, #E9A020 80%, #C8860A 60%);
+  background-size: 250% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer-gold 20s linear infinite;
+  background-color: rgba(200,134,10,0.08);
   border: 1px solid rgba(200,134,10,0.2);
   padding: 2px 10px;
   border-radius: 20px;
@@ -457,7 +476,7 @@ nav a:hover { opacity: 1; color: var(--or); }
   background: rgba(250,247,242,0.85);
   border: 1px solid var(--beige-soft);
   border-radius: 2px;
-  overflow: hidden;
+  overflow: visible; /* Important : permet au ::after de déborder pour la bordure animée */
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   cursor: pointer;
   text-decoration: none;
@@ -469,11 +488,33 @@ nav a:hover { opacity: 1; color: var(--or); }
 .card::after {
   content: '';
   position: absolute;
-  inset: 0;
-  border: 1px solid var(--or);
+  inset: -1px;
+  padding: 1px;
+  background: linear-gradient(
+    100deg,
+    #C8860A 10%,
+    #E9A020 30%,
+    #FFF0B0 50%,
+    #F0C56A 65%,
+    #C8860A 85%,
+    #E9A020 80%,
+    #C8860A 60%
+  );
+  background-size: 250% auto;
+  -webkit-mask:
+     linear-gradient(#fff 0 0) content-box,
+     linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  border-radius: 3px;
   opacity: 0;
+  transition: opacity 0.35s ease;
   pointer-events: none;
-  transition: opacity 0.3s;
+  animation: shimmer-gold-border 20s linear infinite;
+  z-index: 2;
+  /* Fix bug reset animation : force GPU layer pour préserver l'état de l'animation lors de la transition opacity */
+  will-change: opacity;
+  transform: translateZ(0);
 }
 .card:hover {
   transform: translateY(-4px);
@@ -484,6 +525,8 @@ nav a:hover { opacity: 1; color: var(--or); }
 .card-img-placeholder {
   width: 100%;
   aspect-ratio: 3/4;
+  overflow: hidden; /* Garde les coins de l'image propres */
+  border-radius: 2px 2px 0 0;
   background: linear-gradient(160deg, var(--creme-2) 0%, var(--creme-3) 100%);
   position: relative;
   display: flex;
@@ -540,8 +583,13 @@ nav a:hover { opacity: 1; color: var(--or); }
   font-family: 'Cormorant Garamond', serif;
   font-size: 1.2rem;
   font-weight: 400;
-  color: var(--or);
   font-style: italic;
+  background: linear-gradient(100deg, #C8860A 10%, #E9A020 30%, #FFF0B0 50%, #F0C56A 65%, #C8860A 85%, #E9A020 80%, #C8860A 60%);
+  background-size: 250% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer-gold 20s linear infinite;
 }
 .card-cat {
   font-size: 0.62rem;
@@ -565,7 +613,12 @@ nav a:hover { opacity: 1; color: var(--or); }
   transition: color 0.2s, letter-spacing 0.2s;
 }
 .card:hover .card-cta {
-  color: var(--or);
+  background: linear-gradient(100deg, #C8860A 10%, #E9A020 30%, #FFF0B0 50%, #F0C56A 65%, #C8860A 85%, #E9A020 80%, #C8860A 60%);
+  background-size: 250% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer-gold 20s linear infinite;
   letter-spacing: 0.2em;
 }
 
@@ -740,7 +793,15 @@ footer {
   transition: opacity 0.2s, color 0.2s;
   min-height: 44px;
 }
-.mn-link:hover { opacity: 1; color: var(--or); }
+.mn-link:hover {
+  opacity: 1;
+  background: linear-gradient(100deg, #C8860A 10%, #E9A020 30%, #FFF0B0 50%, #F0C56A 65%, #C8860A 85%, #E9A020 80%, #C8860A 60%);
+  background-size: 250% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer-gold 20s linear infinite;
+}
 .mn-platforms {
   display: flex;
   flex-wrap: wrap;
