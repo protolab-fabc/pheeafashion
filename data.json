@@ -6,26 +6,152 @@
     ],
     "profil_vinted": "https://www.vinted.be/member/3138419705-pheeafashion?tab=closet",
     "profil_tiktok": "https://www.tiktok.com/@alimatou.gnanou",
-    "total": 52,
-    "vinted": 51,
-    "tiktok": 1,
-    "mis_a_jour": "14/04/2026 17:26",
+    "total": 53,
+    "vinted": 53,
+    "tiktok": 0,
+    "mis_a_jour": "16/04/2026 09:37",
     "statut": "ok"
   },
   "articles": [
     {
-      "id": "8593444413",
-      "titre": "Robe en jersey T XL",
-      "prix": 16.0,
+      "id": "8665276596",
+      "titre": "Dr Matens 39",
+      "prix": 28.0,
       "cat": "Femme",
       "platform": "Vinted",
-      "lien": "https://www.vinted.be/items/8593444413",
-      "image": "https://images1.vinted.net/t/01_00375_BSSQ8EthHbjm4ctCCV7R2YuN/310x430/1775597397.webp?s=1733cdd87df972e386d25b215ee9bf38367aa3f8",
-      "taille": "XL / 42 / 14 État Neuf avec étiquette Ma",
-      "marque": "Street One Menu relatif à la marque Tail",
-      "etat": "Neuf avec étiquette Matière Viscose Coul",
-      "matiere": "Viscose Couleur Rouge Ajouté Il y a 6 jo",
-      "couleur": "Rouge Ajouté Il y a 6 jours Neuve avec é"
+      "lien": "https://www.vinted.be/items/8665276596",
+      "image": "https://images1.vinted.net/t/04_00e63_Y5XeRxZkXan2xV9Ku57fJmDc/310x430/1776324453.webp?s=fa76de778120fce277454ca7988759b041d815bb",
+      "taille": "39 État Très bon état Matière Cuir Coule",
+      "marque": "Dr. Martens Menu relatif à la marque Tai",
+      "etat": "Très bon état Matière Cuir Couleur Noir",
+      "matiere": "Cuir Couleur Noir Ajouté Il y a 2 minute",
+      "couleur": "Noir Ajouté Il y a 2 minutes Magnifique"
+    },
+    {
+      "id": "8655945356",
+      "titre": "Robe bretelles minces T M/L",
+      "prix": 10.0,
+      "cat": "Femme",
+      "platform": "Vinted",
+      "lien": "https://www.vinted.be/items/8655945356",
+      "image": "https://images1.vinted.net/t/04_0068d_jdbgAXinUSFMADfSsDPvDRu9/310x430/1776200917.webp?s=563a4dc54b3277323118c189469bd3219c232898",
+      "taille": "L / 40 / 12 État Très bon état Matière P",
+      "marque": "In April 1986 Menu relatif à la marque T",
+      "etat": "Très bon état Matière Polyester, Viscose",
+      "matiere": "Polyester, Viscose Couleur Rouge, Beige",
+      "couleur": "Rouge, Beige Ajouté Il y a un jour Belle"
+    },
+    {
+      "id": "8655927510",
+      "titre": "Robe mis genou évasée T 38",
+      "prix": 10.0,
+      "cat": "Femme",
+      "platform": "Vinted",
+      "lien": "https://www.vinted.be/items/8655927510",
+      "image": "https://images1.vinted.net/t/05_00ba5_hb6cttKBqzADPwraiUGAQ68E/310x430/1776200684.webp?s=f3afdb094887fc12ff68da33dcde9a67fb8ab859",
+      "taille": "S / 36 / 8 État Très bon état Matière Vi",
+      "marque": "Naf Naf Menu relatif à la marque Taille",
+      "etat": "Très bon état Matière Viscose Couleur Vi",
+      "matiere": "Viscose Couleur Violet Ajouté Il y a un",
+      "couleur": "Violet Ajouté Il y a un jour Robe avec u"
+    },
+    {
+      "id": "8655856310",
+      "titre": "Blouse léopard TS",
+      "prix": 7.0,
+      "cat": "Femme",
+      "platform": "Vinted",
+      "lien": "https://www.vinted.be/items/8655856310",
+      "image": "https://images1.vinted.net/t/06_0250c_WzqFN4915KC7EYBo6ohuDo4T/310x430/1776199831.webp?s=b73f3883b49a9b220b5cff88d0dcc45193aa5079",
+      "taille": "S / 36 / 8 État Très bon état Couleur Ma",
+      "marque": "Camaïeu Menu relatif à la marque Taille",
+      "etat": "Très bon état Couleur Marron, Beige Ajou",
+      "matiere": "",
+      "couleur": "Marron, Beige Ajouté Il y a un jour Très"
+    },
+    {
+      "id": "8655836465",
+      "titre": "T-shirt multicolore TL",
+      "prix": 6.0,
+      "cat": "Femme",
+      "platform": "Vinted",
+      "lien": "https://www.vinted.be/items/8655836465",
+      "image": "https://images1.vinted.net/t/01_01c03_1eJ1CMzm4BWfKAGhqfvTrbvt/310x430/1776199609.webp?s=34a8f6cc292073071544a4a02db0871f3e3c9544",
+      "taille": "L / 40 / 12 État Très bon état Matière P",
+      "marque": "Essence Menu relatif à la marque Taille",
+      "etat": "Très bon état Matière Polyester Couleur",
+      "matiere": "Polyester Couleur Multicolore Ajouté Il",
+      "couleur": "Multicolore Ajouté Il y a un jour Très b"
+    },
+    {
+      "id": "8655807466",
+      "titre": "Ensemble fille bb T 6 mois",
+      "prix": 8.0,
+      "cat": "Femme",
+      "platform": "Vinted",
+      "lien": "https://www.vinted.be/items/8655807466",
+      "image": "https://images1.vinted.net/t/05_00bee_PqXYYcmSmZgVGdbS76f8Cia5/310x430/1776199299.webp?s=fb19570c01d15ff7f2490857ab907b98a33849b4",
+      "taille": "3-6 mois / 62 cm État Neuf avec étiquett",
+      "marque": "pas de marque Menu relatif à la marque T",
+      "etat": "Neuf avec étiquette Matière Coton, Polye",
+      "matiere": "Coton, Polyester Couleur Lila, Blanc Ajo",
+      "couleur": "Lila, Blanc Ajouté Il y a un jour Neuf a"
+    },
+    {
+      "id": "8655787282",
+      "titre": "Combi bb T6 mois",
+      "prix": 0.0,
+      "cat": "Femme",
+      "platform": "Vinted",
+      "lien": "https://www.vinted.be/items/8655787282",
+      "image": "https://images1.vinted.net/t/06_011aa_uSNiD1HDwZxnrpKy6AH6kpMT/310x430/1776199091.webp?s=b9b47df98fe8c4ec8921eed158e62f9a6dfe9e8d",
+      "taille": "",
+      "marque": "",
+      "etat": "",
+      "matiere": "",
+      "couleur": ""
+    },
+    {
+      "id": "8655714969",
+      "titre": "Ensemble BB 6 mois",
+      "prix": 11.0,
+      "cat": "Femme",
+      "platform": "Vinted",
+      "lien": "https://www.vinted.be/items/8655714969",
+      "image": "https://images1.vinted.net/t/03_01111_uciiGZbk5aXPpUwWXkVP3eg7/310x430/1776198398.webp?s=b27c490f10f4c9e6fd8729e708f7b1d4a1300519",
+      "taille": "3-6 mois / 62 cm État Neuf avec étiquett",
+      "marque": "pas de marque Menu relatif à la marque T",
+      "etat": "Neuf avec étiquette Matière Coton Couleu",
+      "matiere": "Coton Couleur Marron, Blanc Ajouté Il y",
+      "couleur": "Marron, Blanc Ajouté Il y a un jour Neuf"
+    },
+    {
+      "id": "8655660870",
+      "titre": "Mini jupe Morgan T L",
+      "prix": 8.0,
+      "cat": "Femme",
+      "platform": "Vinted",
+      "lien": "https://www.vinted.be/items/8655660870",
+      "image": "https://images1.vinted.net/t/05_011e1_p4ZYS5CUvNwa3f6Zh7FYg8yn/310x430/1776197915.webp?s=377fecb576ea7e53cd47e99b53a266928b5749df",
+      "taille": "L / 40 / 12 État Très bon état Couleur M",
+      "marque": "Morgan Menu relatif à la marque Taille L",
+      "etat": "Très bon état Couleur Marron Ajouté Il y",
+      "matiere": "",
+      "couleur": "Marron Ajouté Il y a un jour Très bon ét"
+    },
+    {
+      "id": "8655493732",
+      "titre": "Robe dentelle noire et dorée T XS",
+      "prix": 13.0,
+      "cat": "Femme",
+      "platform": "Vinted",
+      "lien": "https://www.vinted.be/items/8655493732",
+      "image": "https://images1.vinted.net/t/06_00ac7_ay9MkQAKnQheUtX9cKH7WJpv/310x430/1776196557.webp?s=6b823c71e31abb9029ef394de9cd0e2741dc211f",
+      "taille": "S / 36 / 8 État Très bon état Matière Co",
+      "marque": "CULT COUPLE Menu relatif à la marque Tai",
+      "etat": "Très bon état Matière Coton, Polyester C",
+      "matiere": "Coton, Polyester Couleur Noir, Doré Ajou",
+      "couleur": "Noir, Doré Ajouté Il y a un jour Robe él"
     },
     {
       "id": "8593356579",
@@ -38,8 +164,8 @@
       "taille": "S / 36 / 8 État Neuf sans étiquette Mati",
       "marque": "EIGHT PARIS Menu relatif à la marque Tai",
       "etat": "Neuf sans étiquette Matière Coton Couleu",
-      "matiere": "Coton Couleur Noir Ajouté Il y a 6 jours",
-      "couleur": "Noir Ajouté Il y a 6 jours Neuve sans ét"
+      "matiere": "Coton Couleur Noir Ajouté Il y a une sem",
+      "couleur": "Noir Ajouté Il y a une semaine Neuve san"
     },
     {
       "id": "8593302205",
@@ -52,8 +178,8 @@
       "taille": "M / 38 / 10 État Neuf avec étiquette Mat",
       "marque": "Aware Menu relatif à la marque Taille M",
       "etat": "Neuf avec étiquette Matière Coton Couleu",
-      "matiere": "Coton Couleur Noir Ajouté Il y a 6 jours",
-      "couleur": "Noir Ajouté Il y a 6 jours Neuve avec  é"
+      "matiere": "Coton Couleur Noir Ajouté Il y a une sem",
+      "couleur": "Noir Ajouté Il y a une semaine Neuve ave"
     },
     {
       "id": "8593267098",
@@ -67,7 +193,7 @@
       "marque": "Street One Menu relatif à la marque Tail",
       "etat": "Neuf avec étiquette Couleur Multicolore",
       "matiere": "",
-      "couleur": "Multicolore Ajouté Il y a 6 jours Neuve"
+      "couleur": "Multicolore Ajouté Il y a une semaine Ne"
     },
     {
       "id": "8593120554",
@@ -80,8 +206,8 @@
       "taille": "M / 38 / 10 État Neuf avec étiquette Mat",
       "marque": "Vila Menu relatif à la marque Taille M /",
       "etat": "Neuf avec étiquette Matière Polyester Co",
-      "matiere": "Polyester Couleur Violet Ajouté Il y a 6",
-      "couleur": "Violet Ajouté Il y a 6 jours Robe longue"
+      "matiere": "Polyester Couleur Violet Ajouté Il y a u",
+      "couleur": "Violet Ajouté Il y a une semaine Robe lo"
     },
     {
       "id": "8592868027",
@@ -94,22 +220,22 @@
       "taille": "S / 36 / 8 État Neuf avec étiquette Mati",
       "marque": "JDY Menu relatif à la marque Taille S /",
       "etat": "Neuf avec étiquette Matière Dentelle Cou",
-      "matiere": "Dentelle Couleur Marron Ajouté Il y a 6",
-      "couleur": "Marron Ajouté Il y a 6 jours Très belle"
+      "matiere": "Dentelle Couleur Marron Ajouté Il y a un",
+      "couleur": "Marron Ajouté Il y a une semaine Très be"
     },
     {
       "id": "8592503480",
       "titre": "Robe longue évasée T38",
-      "prix": 0.0,
+      "prix": 60.0,
       "cat": "Femme",
       "platform": "Vinted",
       "lien": "https://www.vinted.be/items/8592503480",
       "image": "https://images1.vinted.net/t/05_026d1_dknkcDS2ScTS3sHPtFEd2jHJ/310x430/1775588833.webp?s=317b557b6b92919fc336d786bcbf3bac49063527",
-      "taille": "",
-      "marque": "",
-      "etat": "",
-      "matiere": "",
-      "couleur": ""
+      "taille": "M / 38 / 10 État Neuf avec étiquette Mat",
+      "marque": "Kaos Menu relatif à la marque Taille M /",
+      "etat": "Neuf avec étiquette Matière Coton Couleu",
+      "matiere": "Coton Couleur Lila Ajouté Il y a une sem",
+      "couleur": "Lila Ajouté Il y a une semaine Neuve ave"
     },
     {
       "id": "8592364425",
@@ -123,7 +249,7 @@
       "marque": "ONLY Menu relatif à la marque Taille M /",
       "etat": "Neuf avec étiquette Matière Polyester Co",
       "matiere": "Polyester Couleur Noir, Rouge Ajouté Il",
-      "couleur": "Noir, Rouge Ajouté Il y a 6 jours Neuve"
+      "couleur": "Noir, Rouge Ajouté Il y a une semaine Ne"
     },
     {
       "id": "8592266373",
@@ -137,12 +263,12 @@
       "marque": "Poti Pati Menu relatif à la marque Taill",
       "etat": "Neuf avec étiquette Couleur Moutarde Ajo",
       "matiere": "",
-      "couleur": "Moutarde Ajouté Il y a 6 jours Sandales"
+      "couleur": "Moutarde Ajouté Il y a une semaine Sanda"
     },
     {
       "id": "8557966215",
       "titre": "Basket femme pointure 39",
-      "prix": 15.0,
+      "prix": 12.0,
       "cat": "Femme",
       "platform": "Vinted",
       "lien": "https://www.vinted.be/items/8557966215",
@@ -210,88 +336,18 @@
       "couleur": "Jaune Ajouté Il y a une semaine Neuf ave"
     },
     {
-      "id": "8557699358",
-      "titre": "Nuisette rouge fait main Taille S à M",
-      "prix": 12.0,
-      "cat": "Femme",
-      "platform": "Vinted",
-      "lien": "https://www.vinted.be/items/8557699358",
-      "image": "https://images1.vinted.net/t/05_01f27_VNKMFvHAhymDAnPwis9FyPCd/310x430/1775233701.webp?s=b3fd22ce9619ded0bdbfb3ffba2497c682482bcf",
-      "taille": "S à M",
-      "marque": "pas de marque Menu relatif à la marque T",
-      "etat": "Neuf sans étiquette Matière Maille Coule",
-      "matiere": "Maille Couleur Rouge Ajouté Il y a une s",
-      "couleur": "Rouge Ajouté Il y a une semaine Super jo"
-    },
-    {
-      "id": "8557664460",
-      "titre": "Ensemble fait main de S à M",
-      "prix": 15.0,
-      "cat": "Femme",
-      "platform": "Vinted",
-      "lien": "https://www.vinted.be/items/8557664460",
-      "image": "https://images1.vinted.net/t/05_001d9_TeQkCcirPvAePSN4qw3mv3zL/310x430/1775233503.webp?s=a5fffa356e3997481603450ad409ec9bdcf4474d",
-      "taille": "M / 38 / 10 État Neuf sans étiquette Mat",
-      "marque": "pas de marque Menu relatif à la marque T",
-      "etat": "Neuf sans étiquette Matière Maille Coule",
-      "matiere": "Maille Couleur Blanc Ajouté Il y a une s",
-      "couleur": "Blanc Ajouté Il y a une semaine Ensemble"
-    },
-    {
-      "id": "8550067993",
-      "titre": "Robe longue noire TS",
-      "prix": 18.0,
-      "cat": "Femme",
-      "platform": "Vinted",
-      "lien": "https://www.vinted.be/items/8550067993",
-      "image": "https://images1.vinted.net/t/04_0256f_qaA1PCdsJCvvfgjewQEvdpGr/310x430/1775148910.webp?s=865866b8015408995a8cc188fb04cb27da20d63b",
-      "taille": "S / 36 / 8 État Neuf avec étiquette Mati",
-      "marque": "Vero Moda Menu relatif à la marque Taill",
-      "etat": "Neuf avec étiquette Matière Coton Couleu",
-      "matiere": "Coton Couleur Noir Ajouté Il y a une sem",
-      "couleur": "Noir Ajouté Il y a une semaine Robe de s"
-    },
-    {
-      "id": "8549971577",
-      "titre": "Robe avec capuche avec des fleurs sur le devant",
-      "prix": 10.0,
-      "cat": "Femme",
-      "platform": "Vinted",
-      "lien": "https://www.vinted.be/items/8549971577",
-      "image": "https://images1.vinted.net/t/06_01bdd_4GBRZ6HESYNXiMPy46Rtj1AG/310x430/1775148274.webp?s=8c02c2a6df82cfcb5e1430037bdb4216a9f8ffb2",
-      "taille": "10 ans / 140 cm État Neuf avec étiquette",
-      "marque": "MO Kids Menu relatif à la marque Taille",
-      "etat": "Neuf avec étiquette Matière Coton Couleu",
-      "matiere": "Coton Couleur Marine Ajouté Il y a une s",
-      "couleur": "Marine Ajouté Il y a une semaine Coupe é"
-    },
-    {
-      "id": "8549910969",
-      "titre": "T-SHIRT t S",
-      "prix": 10.0,
-      "cat": "Femme",
-      "platform": "Vinted",
-      "lien": "https://www.vinted.be/items/8549910969",
-      "image": "https://images1.vinted.net/t/03_011c8_XxdLvZgY6wGf3T2qCwxDuoJV/310x430/1775147870.webp?s=acceadfc3095b5858825a4e0b5912af1d13d297a",
-      "taille": "S / 36 / 8 État Neuf avec étiquette Mati",
-      "marque": "Anna Field Menu relatif à la marque Tail",
-      "etat": "Neuf avec étiquette Matière Coton Couleu",
-      "matiere": "Coton Couleur Lila Ajouté Il y a une sem",
-      "couleur": "Lila Ajouté Il y a une semaine Neuf avec"
-    },
-    {
       "id": "8549832484",
       "titre": "Robe longue évasée avec des franges T XS",
-      "prix": 0.0,
+      "prix": 18.0,
       "cat": "Femme",
       "platform": "Vinted",
       "lien": "https://www.vinted.be/items/8549832484",
       "image": "https://images1.vinted.net/t/01_026a9_MHNh8cvEvQzBb41aU6dUBjN8/310x430/1775594129.webp?s=a510b161de9be9d4021ce21a6b0ac78299e5cb1a",
-      "taille": "",
-      "marque": "",
-      "etat": "",
-      "matiere": "",
-      "couleur": ""
+      "taille": "S / 36 / 8 État Neuf avec étiquette Mati",
+      "marque": "Sisters Point Menu relatif à la marque T",
+      "etat": "Neuf avec étiquette Matière Polyester Co",
+      "matiere": "Polyester Couleur Menthe, Blanc Ajouté I",
+      "couleur": "Menthe, Blanc Ajouté Il y a une semaine"
     },
     {
       "id": "8486922207",
@@ -406,20 +462,6 @@
       "couleur": "Bleu clair Ajouté Il y a 2 semaines Neuv"
     },
     {
-      "id": "8486994556",
-      "titre": "Robe avec de l’élastique à la taille T XL mais je pense que ça taille L",
-      "prix": 18.0,
-      "cat": "Femme",
-      "platform": "Vinted",
-      "lien": "https://www.vinted.be/items/8486994556",
-      "image": "https://images1.vinted.net/t/05_0047f_9hbgTHGi7wh1tPxVM9MKaqJZ/310x430/1774515674.webp?s=30886b7c72c4bd82f13c0d97f4707314402c6b59",
-      "taille": "XL / 42 / 14 État Neuf avec étiquette Co",
-      "marque": "Amélie & Amélie Menu relatif à la marque",
-      "etat": "Neuf avec étiquette Couleur Marron Ajout",
-      "matiere": "",
-      "couleur": "Marron Ajouté Il y a 2 semaines Neuve av"
-    },
-    {
       "id": "8486947639",
       "titre": "Robe ample TS",
       "prix": 18.0,
@@ -464,7 +506,7 @@
     {
       "id": "8350633317",
       "titre": "montre bague",
-      "prix": 20.0,
+      "prix": 18.0,
       "cat": "Accessoires",
       "platform": "Vinted",
       "lien": "https://www.vinted.be/items/8350633317",
@@ -520,7 +562,7 @@
     {
       "id": "8350414241",
       "titre": "Broché dorée en forme de guépard",
-      "prix": 20.0,
+      "prix": 15.0,
       "cat": "Femme",
       "platform": "Vinted",
       "lien": "https://www.vinted.be/items/8350414241",
@@ -560,20 +602,6 @@
       "couleur": "Beige Ajouté Il y a 5 semaines Très beau"
     },
     {
-      "id": "8317951087",
-      "titre": "Jupe ballon tS",
-      "prix": 22.0,
-      "cat": "Femme",
-      "platform": "Vinted",
-      "lien": "https://www.vinted.be/items/8317951087",
-      "image": "https://images1.vinted.net/t/05_01147_4yEfAuHzLdCEuVYJaMPBbMop/310x430/1772705503.webp?s=f2eb4827ab4c40c85f306a31f483080e45fb5299",
-      "taille": "S / 36 / 8 État Neuf avec étiquette Mati",
-      "marque": "Vero Moda Menu relatif à la marque Taill",
-      "etat": "Neuf avec étiquette Matière Polyester Co",
-      "matiere": "Polyester Couleur Noir Ajouté Il y a 5 s",
-      "couleur": "Noir Ajouté Il y a 5 semaines Neuve avec"
-    },
-    {
       "id": "8306163341",
       "titre": "Pantalon homme t w33 L32",
       "prix": 20.0,
@@ -585,7 +613,7 @@
       "marque": "ONLY & SONS Menu relatif à la marque Tai",
       "etat": "Neuf avec étiquette Couleur Bleu Ajouté",
       "matiere": "",
-      "couleur": "Bleu Ajouté Il y a 5 semaines Pantalon j"
+      "couleur": "Bleu Ajouté Il y a 6 semaines Pantalon j"
     },
     {
       "id": "8301901438",
@@ -726,17 +754,6 @@
       "etat": "Neuf avec étiquette Couleur Blanc, Fuchs",
       "matiere": "",
       "couleur": "Blanc, Fuchsia Ajouté Il y a 6 semaines"
-    },
-    {
-      "id": "tt_7628189883848281376",
-      "titre": "Article de mode · Pépite PheeA",
-      "prix": 0,
-      "cat": "Femme",
-      "platform": "TikTok",
-      "lien": "https://www.tiktok.com/@alimatou.gnanou/video/7628189883848281376",
-      "image": "https://p16-common-sign.tiktokcdn-eu.com/tos-useast2a-p-0037-euttp/o8FOpDYI82FMDc5fEQqccmplxfRi3AcPEQ5BCP~tplv-tiktokx-origin.image?dr=10395&x-expires=1776351600&x-signature=55oYqt2l0%2FEcJTe6vTkaaYVa%2BRQ%3D&t=4d5b0474&ps=13740610&shp=81f88b70&shcp=43f4a2f9&idc=useast2b",
-      "taille": "",
-      "marque": ""
     }
   ]
 }
